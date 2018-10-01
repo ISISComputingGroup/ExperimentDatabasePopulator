@@ -1,14 +1,16 @@
-from ExperimentData.rbtablesupdater import RBTablesUpdater
+from ExperimentData.populator import Populator
 import threading
 from time import sleep
-from ExperimentData.database_model import database
+from ExperimentData.database_model import database_proxy
+from peewee import MySQLDatabase
 import socket
 
 
 class main:
     def __init__(self):
-        database.init("exp_data", user="exp_data", password="$exp_data", host="127.0.0.1")
-        self.rb_tables = RBTablesUpdater(get_instrument_name(socket.gethostname()))
+        database = MySQLDatabase("exp_data", user="exp_data", password="$exp_data", host="127.0.0.1")
+        database_proxy.initialize(database)
+        self.rb_tables = Populator(get_instrument_name(socket.gethostname()))
         self.lock = threading.RLock()
 
     def start_thread(self):

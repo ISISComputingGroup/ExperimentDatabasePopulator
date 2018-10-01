@@ -110,6 +110,6 @@ def reformat_data(teams, dates, local_contacts):
 
 
 def gather_data_and_format(instrument_name):
-    client = connect()
-    teams, dates, local_contacts = get_data_from_web(instrument_name, client)
+    client, session_id = connect()
+    teams, dates, local_contacts = get_data_from_web(instrument_name, client, session_id)
     return reformat_data(teams, dates, local_contacts)

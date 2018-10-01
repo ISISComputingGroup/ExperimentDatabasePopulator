@@ -1,15 +1,14 @@
 import unittest
 from ExperimentData.database_model import Experiment
-from webservicestestdata import *
+from webservices_test_data import *
 from ExperimentData.userdata import UserData
-from ExperimentData.webservicesreader import LOCAL_ORG, LOCAL_ROLE, reformat_data, \
+from ExperimentData.webservices_reader import LOCAL_ORG, LOCAL_ROLE, reformat_data, \
     get_start_and_end, get_experimenters, get_credentials
-from hamcrest import *
 from datetime import datetime, timedelta
 from mock import patch
 
 
-class WebServicesReaderTest(unittest.TestCase):
+class WebServicesReaderTests(unittest.TestCase):
     def test_WHEN_get_start_and_end_date_of_100_THEN_time_difference_of_200(self):
         start, end = get_start_and_end(datetime.now(), 100)
         self.assertEqual(timedelta(days=200), end-start)

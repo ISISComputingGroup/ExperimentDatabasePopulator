@@ -1,12 +1,12 @@
 from peewee import *
 # Model built using peewiz
 
-database = MySQLDatabase(None)
+database_proxy = Proxy()
 
 
 class BaseModel(Model):
     class Meta:
-        database = database
+        database = database_proxy
 
 
 class Experiment(BaseModel):
