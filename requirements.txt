@@ -1,0 +1,4 @@
+suds
+keepass
+peewee
+pymysql
