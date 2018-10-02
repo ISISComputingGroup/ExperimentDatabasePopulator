@@ -1,7 +1,7 @@
-from ExperimentData.populator import Populator
+from exp_db_populator.populator import Populator
 import threading
 from time import sleep
-from ExperimentData.database_model import database_proxy
+from exp_db_populator.database_model import database_proxy
 from peewee import MySQLDatabase
 import socket
 
@@ -10,7 +10,8 @@ class main:
     def __init__(self):
         database = MySQLDatabase("exp_data", user="exp_data", password="$exp_data", host="127.0.0.1")
         database_proxy.initialize(database)
-        self.rb_tables = Populator(get_instrument_name(socket.gethostname()))
+        #self.rb_tables = Populator(get_instrument_name(socket.gethostname()))
+        self.rb_tables = Populator("LARMOR")
         self.lock = threading.RLock()
 
     def start_thread(self):

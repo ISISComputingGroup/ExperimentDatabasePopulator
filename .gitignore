@@ -11,10 +11,6 @@ dllPath.bat
 runIOC.bat
 runIOC.sh
 relPaths.sh
-/src/ExperimentData/bin/
-/src/ExperimentData/obj/
-/src/ExperimentDataApplication/bin/
-/src/ExperimentDataApplication/obj/
 *.pyc
 .idea
 .project

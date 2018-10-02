@@ -1,8 +1,8 @@
 import unittest
-from ExperimentData.database_model import Experiment
+from exp_db_populator.database_model import Experiment
 from webservices_test_data import *
-from ExperimentData.userdata import UserData
-from ExperimentData.webservices_reader import LOCAL_ORG, LOCAL_ROLE, reformat_data, \
+from exp_db_populator.userdata import UserData
+from exp_db_populator.webservices_reader import LOCAL_ORG, LOCAL_ROLE, reformat_data, \
     get_start_and_end, get_experimenters, get_credentials
 from datetime import datetime, timedelta
 from mock import patch

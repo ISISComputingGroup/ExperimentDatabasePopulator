@@ -2,7 +2,7 @@
 from suds.client import Client
 import ssl
 import sys
-from ExperimentData.userdata import UserData
+from exp_db_populator.userdata import UserData
 from datetime import datetime, timedelta
 from keepass import kpdb
 from database_model import User, Experiment
@@ -27,7 +27,7 @@ if hasattr(ssl, '_create_unverified_context'):
 
 def get_credentials():
     try:
-        db = kpdb.Database("ExperimentData/inst_passwords.kdb", "reliablebeam")
+        db = kpdb.Database("exp_db_populator/inst_passwords.kdb", "reliablebeam")
         entry = [e for e in db.entries if e.title == u"RBFinder"][0]
         return entry.username, entry.password
     except Exception as e:

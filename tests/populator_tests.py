@@ -1,11 +1,11 @@
 import unittest
-import ExperimentData.database_model as model
+import exp_db_populator.database_model as model
 from peewee import SqliteDatabase
-from ExperimentData.populator import remove_users_not_referenced, remove_old_experiment_teams, \
+from exp_db_populator.populator import remove_users_not_referenced, remove_old_experiment_teams, \
     remove_experiments_not_referenced, Populator
 from webservices_test_data import *
 from mock import Mock
-from ExperimentData.userdata import UserData
+from exp_db_populator.userdata import UserData
 
 
 class PopulatorTests(unittest.TestCase):

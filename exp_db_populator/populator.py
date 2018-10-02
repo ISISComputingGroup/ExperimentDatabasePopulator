@@ -1,5 +1,5 @@
-from ExperimentData.webservices_reader import gather_data_and_format
-from ExperimentData.database_model import User, Experiment, Experimentteams, database_proxy
+from exp_db_populator.webservices_reader import gather_data_and_format
+from exp_db_populator.database_model import User, Experiment, Experimentteams, database_proxy
 from datetime import datetime, timedelta
 
 AGE_OF_EXPIRATION = 100 # How old (in days) the startdate of an experiment must be before it is removed from the database
@@ -31,7 +31,7 @@ class Populator:
 
         Args:
             experiments (list[dict]): A list of dictionaries containing information on experiments.
-            experiment_teams (list[ExperimentData.userdata.UserData]): A list containing the users for all new experiments.
+            experiment_teams (list[exp_db_populator.userdata.UserData]): A list containing the users for all new experiments.
         """
         if not experiments or not experiment_teams:
             raise KeyError("Experiment without team or vice versa")

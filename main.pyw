@@ -1,6 +1,6 @@
 from threading import Timer
-from ExperimentData.populator import Populator
-from ExperimentData.mysqlwrapper import MySQLWrapper
+from exp_db_populator.populator import Populator
+from exp_db_populator.mysqlwrapper import MySQLWrapper
 
 rb_tables = Populator(MySQLWrapper("exp_data", "exp_data", "$exp_data", "127.0.0.1"))
 rb_tables.file_path = rb_tables.guess_file_name()
