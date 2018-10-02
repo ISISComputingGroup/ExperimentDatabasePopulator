@@ -2,7 +2,7 @@ from datetime import datetime
 from mock import MagicMock, PropertyMock
 TEST_INSTRUMENT = 'test_instrument'
 TEST_RBNUMBER = '10000'
-TEST_TIMEALLOCATED = 2.6666667
+TEST_TIMEALLOCATED = 7
 TEST_DATE = datetime(2018, 1, 1)
 
 TEST_CONTACT_NAME = 'Dr Ron Smith'

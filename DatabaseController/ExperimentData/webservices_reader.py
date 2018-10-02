@@ -87,6 +87,8 @@ def reformat_data(teams, dates, local_contacts):
         experiments = []
         experiment_teams = []
 
+        # TODO: More validation on incoming data
+
         for date in dates:
             experiments.append({Experiment.experimentid: date['rbNumber'],
                                 Experiment.startdate: date['scheduledDate'],

@@ -18,22 +18,18 @@ class main:
         write_thread.daemon = True  # Daemonise thread
         write_thread.start()
 
-    def do_work(self):
-        while True:
-            try:
-                print("Performing hourly update")
-                with self.lock:
-                    self.rb_tables.update(False)
-                sleep(3600)
-            except Exception as err:
-                print(err)
-
-    def force_update(self):
+    def update_tables(self):
         try:
             with self.lock:
-                self.rb_tables.update(True)
-        except Exception as err:
-            print(err)
+                self.rb_tables.update()
+        except Exception as e:
+            print(e)
+
+    def do_work(self):
+        while True:
+            print("Performing hourly update")
+            self.update_tables()
+            sleep(3600)
 
 
 def get_instrument_name(host_name):
@@ -59,7 +55,7 @@ if __name__ == '__main__':
             elif menu_input == "M":
                 pass
             elif menu_input == "U":
-                main.force_update()
+                main.update_tables()
             else:
                 print("Command not recognised. Enter M to view menu. ")
 
