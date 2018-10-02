@@ -1,6 +1,8 @@
 from exp_db_populator.webservices_reader import gather_data_and_format
 from exp_db_populator.database_model import User, Experiment, Experimentteams, database_proxy
 from datetime import datetime, timedelta
+import threading
+from time import sleep
 
 AGE_OF_EXPIRATION = 100 # How old (in days) the startdate of an experiment must be before it is removed from the database
 
@@ -20,8 +22,10 @@ def remove_old_experiment_teams(age):
     Experimentteams.delete().where(Experimentteams.startdate < date).execute()
 
 
-class Populator:
-    def __init__(self, instrument_name):
+class Populator(threading.Thread):
+    def __init__(self, instrument_name, db_lock):
+        threading.Thread.__init__(self)
+        self.db_lock = db_lock
         self.prev_result = ""
         self.instrument_name = instrument_name
 
@@ -56,14 +60,17 @@ class Populator:
         remove_experiments_not_referenced()
         remove_users_not_referenced()
 
-    def update(self):
-        try:
-            database_proxy.connect()
-            experiments, experiment_teams = gather_data_and_format(self.instrument_name)
-            self.populate(experiments, experiment_teams)
-            self.cleanup_old_data()
-            database_proxy.close()
-        except Exception as e:
-            print("Unable to populate database: {}".format(e))
+    def run(self):
+        while True:
+            print("Performing hourly update")
+            try:
+                database_proxy.connect()
+                experiments, experiment_teams = gather_data_and_format(self.instrument_name)
+                self.populate(experiments, experiment_teams)
+                self.cleanup_old_data()
+                database_proxy.close()
+            except Exception as e:
+                print("Unable to populate database: {}".format(e))
 
-        print("Experiment data updated successfully")
+            print("Experiment data updated successfully")
+            sleep(3600)

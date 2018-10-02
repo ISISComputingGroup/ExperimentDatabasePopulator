@@ -1,11 +1,11 @@
 import unittest
 from exp_db_populator.database_model import Experiment
-from webservices_test_data import *
+from tests.webservices_test_data import *
 from exp_db_populator.userdata import UserData
 from exp_db_populator.webservices_reader import LOCAL_ORG, LOCAL_ROLE, reformat_data, \
     get_start_and_end, get_experimenters, get_credentials
 from datetime import datetime, timedelta
-from mock import patch
+from mock import patch, MagicMock
 
 
 class WebServicesReaderTests(unittest.TestCase):
@@ -25,35 +25,6 @@ class WebServicesReaderTests(unittest.TestCase):
     def test_GIVEN_no_experimenters_WHEN_get_experimenters_THEN_empty_list(self):
         team = MagicMock(spec=['NOT_EXPERIMENTEERS'])
         self.assertEqual([], get_experimenters(team))
-
-    @patch('keepass.kpdb.Database')
-    def test_GIVEN_no_saved_credentials_WHEN_get_credentials_THEN_exception(self, credentials_db):
-        credentials_db.return_value = {}
-        self.assertRaises(AttributeError, get_credentials)
-
-    @patch('keepass.kpdb.Database')
-    def test_GIVEN_no_entries_in_saved_credentials_WHEN_get_credentials_THEN_exception(self, credentials_db):
-        credentials_db.return_value.entries = []
-        self.assertRaises(IndexError, get_credentials)
-
-    @patch('keepass.kpdb.Database')
-    def test_GIVEN_no_RBFinder_entry_in_saved_credentials_WHEN_get_credentials_THEN_exception(self, credentials_db):
-        an_entry = MagicMock()
-        an_entry.title = "NOT_RBFINDER"
-        credentials_db.return_value.entries = [an_entry]
-        self.assertRaises(IndexError, get_credentials)
-
-    @patch('keepass.kpdb.Database')
-    def test_GIVEN_RBFinder_entry_in_saved_credentials_WHEN_get_credentials_THEN_username_and_password_returned(self, credentials_db):
-        EXP_USER, EXP_PASS = "user", "pass"
-        an_entry = MagicMock()
-        an_entry.title = u"RBFinder"
-        an_entry.username = EXP_USER
-        an_entry.password = EXP_PASS
-        credentials_db.return_value.entries = [an_entry]
-        actual_user, actual_pass = get_credentials()
-        self.assertEqual(EXP_USER, actual_user)
-        self.assertEqual(EXP_PASS, actual_pass)
 
     def test_GIVEN_no_data_set_WHEN_data_formatted_THEN_no_data_set(self):
         experiments, experiment_teams = reformat_data([], [], [])

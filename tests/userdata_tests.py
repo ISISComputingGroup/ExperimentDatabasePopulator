@@ -1,7 +1,7 @@
 import unittest
 import exp_db_populator.database_model as model
 from peewee import SqliteDatabase, PeeweeException
-from webservices_test_data import *
+from tests.webservices_test_data import *
 from exp_db_populator.userdata import UserData
 
 

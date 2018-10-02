@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 from suds.client import Client
 import ssl
-import sys
 from exp_db_populator.userdata import UserData
 from datetime import datetime, timedelta
-from keepass import kpdb
-from database_model import User, Experiment
+from pykeepass import PyKeePass
+from exp_db_populator.database_model import User, Experiment
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
@@ -16,10 +15,6 @@ BUS_APPS_SITE = "https://fitbaweb1.isis.cclrc.ac.uk:8443/"
 BUS_APPS_AUTH = BUS_APPS_SITE + "UserOfficeWebService/UserOfficeWebService?wsdl"
 BUS_APPS_API = BUS_APPS_SITE + "ScheduleSessionBeanService/ScheduleSessionBean?wsdl"
 
-# Required so that unicode values can be read from files
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
 # This is a workaround because the web service does not have a valid certificate
 if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -27,8 +22,8 @@ if hasattr(ssl, '_create_unverified_context'):
 
 def get_credentials():
     try:
-        db = kpdb.Database("exp_db_populator/inst_passwords.kdb", "reliablebeam")
-        entry = [e for e in db.entries if e.title == u"RBFinder"][0]
+        db = PyKeePass("exp_db_populator/inst_passwords.kdbx", "reliablebeam")
+        entry = db.find_entries(title="RBFinder", first=True)
         return entry.username, entry.password
     except Exception as e:
         print("Failed to get username and password: {}".format(e))

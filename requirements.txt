@@ -1,4 +1,6 @@
-suds
-keepass
+suds-jurko
+pykeepass
 peewee
 pymysql
+mock
+xmlrunner

@@ -1,4 +1,4 @@
-from database_model import Role, User
+from exp_db_populator.database_model import Role, User
 
 
 class UserData:
