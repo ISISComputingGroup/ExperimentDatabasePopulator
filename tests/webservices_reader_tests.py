@@ -1,7 +1,7 @@
 import unittest
 from exp_db_populator.database_model import Experiment
 from tests.webservices_test_data import *
-from exp_db_populator.userdata import UserData
+from exp_db_populator.data_types import UserData, ExperimentTeamData
 from exp_db_populator.webservices_reader import LOCAL_ORG, LOCAL_ROLE, reformat_data, \
     get_start_and_end, get_experimenters, get_credentials
 from datetime import datetime, timedelta
@@ -62,7 +62,8 @@ class WebServicesReaderTests(unittest.TestCase):
     def test_GIVEN_local_contacts_and_corresponding_date_WHEN_data_formatted_THEN_experiment_teams_populated(self):
         experiments, experiment_teams = reformat_data([], TEST_DATES, TEST_CONTACTS)
 
-        expected_user_data = UserData(TEST_CONTACT_NAME, LOCAL_ORG, LOCAL_ROLE, TEST_RBNUMBER, TEST_DATE)
+        expected_user = UserData(TEST_CONTACT_NAME, LOCAL_ORG)
+        expected_user_data = ExperimentTeamData(expected_user, LOCAL_ROLE, TEST_RBNUMBER, TEST_DATE)
 
         self.assertEqual(len(experiment_teams), 1)
         self.assertTrue(expected_user_data == experiment_teams[0])
@@ -75,7 +76,8 @@ class WebServicesReaderTests(unittest.TestCase):
         team = get_test_experiment_team([TEST_USER_1])
         experiments, experiment_teams = reformat_data([team], TEST_DATES, [])
 
-        expected_user_data = UserData(TEST_USER_1_NAME, TEST_USER_1_ORG, TEST_USER_1_ROLE, TEST_RBNUMBER, TEST_DATE)
+        expected_user = UserData(TEST_USER_1_NAME, TEST_USER_1_ORG)
+        expected_user_data = ExperimentTeamData(expected_user, TEST_USER_1_ROLE, TEST_RBNUMBER, TEST_DATE)
 
         self.assertEqual(len(experiment_teams), 1)
         self.assertTrue(expected_user_data == experiment_teams[0])
@@ -84,8 +86,13 @@ class WebServicesReaderTests(unittest.TestCase):
         team = get_test_experiment_team([TEST_USER_1, TEST_USER_PI])
         experiments, experiment_teams = reformat_data([team], TEST_DATES, [])
 
-        expected_user_data = [UserData(TEST_PI_NAME, TEST_PI_ORG, TEST_PI_ROLE, TEST_RBNUMBER, TEST_DATE),
-                              UserData(TEST_USER_1_NAME, TEST_USER_1_ORG, TEST_USER_1_ROLE, TEST_RBNUMBER, TEST_DATE)]
+        expected_user_1 = UserData(TEST_PI_NAME, TEST_PI_ORG)
+        expected_user_data_1 = ExperimentTeamData(expected_user_1, TEST_PI_ROLE, TEST_RBNUMBER, TEST_DATE)
+
+        expected_user_2 = UserData(TEST_USER_1_NAME, TEST_USER_1_ORG)
+        expected_user_data_2 = ExperimentTeamData(expected_user_2, TEST_USER_1_ROLE, TEST_RBNUMBER, TEST_DATE)
+
+        expected_user_data = [expected_user_data_2, expected_user_data_1]
 
         self.assertEqual(len(experiment_teams), 2)
-        self.assertTrue(sorted(expected_user_data) == sorted(experiment_teams))
+        self.assertTrue(expected_user_data == experiment_teams)

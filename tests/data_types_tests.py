@@ -1,8 +1,8 @@
 import unittest
 import exp_db_populator.database_model as model
-from peewee import SqliteDatabase, PeeweeException
+from peewee import SqliteDatabase
 from tests.webservices_test_data import *
-from exp_db_populator.userdata import UserData
+from exp_db_populator.data_types import UserData, ExperimentTeamData
 
 
 class UserDataTests(unittest.TestCase):
@@ -12,7 +12,8 @@ class UserDataTests(unittest.TestCase):
         database = SqliteDatabase(":memory:")
         model.database_proxy.initialize(database)
         model.database_proxy.create_tables([model.User, model.Experimentteams, model.Experiment, model.Role])
-        self.user_data = UserData(TEST_PI_NAME, TEST_PI_ORG, TEST_PI_ROLE, TEST_RBNUMBER,   TEST_DATE)
+        self.user_data = UserData(TEST_PI_NAME, TEST_PI_ORG)
+        self.exp_team_data = ExperimentTeamData(self.user_data, TEST_PI_ROLE, TEST_RBNUMBER, TEST_DATE)
 
     def test_GIVEN_empty_database_WHEN_user_id_requested_THEN_user_created(self):
         self.assertEqual(0, model.User.select().count())
@@ -39,7 +40,7 @@ class UserDataTests(unittest.TestCase):
         self.assertEqual(0, model.Role.select().count())
 
         try:
-            self.user_data.role_id
+            self.exp_team_data.role_id
             self.assertTrue(False)
         except model.Role.DoesNotExist as e:
             self.assertTrue(True)
@@ -50,7 +51,7 @@ class UserDataTests(unittest.TestCase):
         existing_role = model.Role.create(name=TEST_PI_ROLE, priority=1)
         self.assertEqual(1, model.Role.select().count())
 
-        role_id = self.user_data.role_id
+        role_id = self.exp_team_data.role_id
 
         self.assertEqual(1,  model.Role.select().count())
         self.assertEqual(existing_role.roleid, role_id)

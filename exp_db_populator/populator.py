@@ -3,9 +3,10 @@ from exp_db_populator.database_model import User, Experiment, Experimentteams, d
 from datetime import datetime, timedelta
 import threading
 from time import sleep
+from peewee import MySQLDatabase
 
 AGE_OF_EXPIRATION = 100 # How old (in days) the startdate of an experiment must be before it is removed from the database
-
+POLLING_TIME = 3600 # Time in seconds between polling the website
 
 def remove_users_not_referenced():
     all_team_user_ids = Experimentteams.select(Experimentteams.userid)
@@ -23,11 +24,16 @@ def remove_old_experiment_teams(age):
 
 
 class Populator(threading.Thread):
-    def __init__(self, instrument_name, db_lock):
-        threading.Thread.__init__(self)
-        self.db_lock = db_lock
+    running = True
+
+    def __init__(self, instrument_name, instrument_host):
+        threading.Thread.__init__(self, daemon=True)
         self.prev_result = ""
+        self.instrument_host = instrument_host
         self.instrument_name = instrument_name
+
+        print("Creating connection to {}".format(instrument_host))
+        self.database = MySQLDatabase("exp_data", user="exp_write", password="exp_write_pass", host=instrument_host)
 
     def populate(self, experiments, experiment_teams):
         """
@@ -35,7 +41,7 @@ class Populator(threading.Thread):
 
         Args:
             experiments (list[dict]): A list of dictionaries containing information on experiments.
-            experiment_teams (list[exp_db_populator.userdata.UserData]): A list containing the users for all new experiments.
+            experiment_teams (list[exp_db_populator.data_types.ExperimentTeamData]): A list containing the users for all new experiments.
         """
         if not experiments or not experiment_teams:
             raise KeyError("Experiment without team or vice versa")
@@ -44,16 +50,14 @@ class Populator(threading.Thread):
 
         # TODO: Remove old experiments first
 
-        for user in experiment_teams:
-            teams_update.append({Experimentteams.experimentid: user.rb_number,
-                                 Experimentteams.roleid: user.role_id,
-                                 Experimentteams.startdate: user.start_date,
-                                 Experimentteams.userid: user.user_id})
+        for exp_team in experiment_teams:
+            teams_update.append({Experimentteams.experimentid: exp_team.rb_number,
+                                 Experimentteams.roleid: exp_team.role_id,
+                                 Experimentteams.startdate: exp_team.start_date,
+                                 Experimentteams.userid: exp_team.user.user_id})
 
-        with database_proxy.atomic():
-            Experiment.insert_many(experiments).on_conflict_replace().execute()
-        with database_proxy.atomic():
-            Experimentteams.insert_many(teams_update).on_conflict_ignore().execute()
+        Experiment.insert_many(experiments).on_conflict_replace().execute()
+        Experimentteams.insert_many(teams_update).on_conflict_ignore().execute()
 
     def cleanup_old_data(self):
         remove_old_experiment_teams(AGE_OF_EXPIRATION)
@@ -61,16 +65,20 @@ class Populator(threading.Thread):
         remove_users_not_referenced()
 
     def run(self):
-        while True:
-            print("Performing hourly update")
+        while self.running:
+            print("Performing hourly update for {}".format(self.instrument_name))
             try:
-                database_proxy.connect()
                 experiments, experiment_teams = gather_data_and_format(self.instrument_name)
-                self.populate(experiments, experiment_teams)
-                self.cleanup_old_data()
-                database_proxy.close()
+                database_proxy.initialize(self.database)
+                with database_proxy:
+                    self.populate(experiments, experiment_teams)
+                    self.cleanup_old_data()
+                database_proxy.initialize(None) # Ensure no other populators send to the wrong database
             except Exception as e:
-                print("Unable to populate database: {}".format(e))
+                print("{} unable to populate database: {}".format(self.instrument_name, e))
 
-            print("Experiment data updated successfully")
-            sleep(3600)
+            print("{} experiment data updated successfully".format(self.instrument_name))
+            for i in range(POLLING_TIME):
+                sleep(1)
+                if not self.running:
+                    return

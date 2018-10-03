@@ -5,8 +5,7 @@ from exp_db_populator.populator import remove_users_not_referenced, remove_old_e
     remove_experiments_not_referenced, Populator
 from tests.webservices_test_data import *
 from mock import Mock
-from exp_db_populator.userdata import UserData
-import threading
+from exp_db_populator.data_types import UserData
 
 
 class PopulatorTests(unittest.TestCase):
@@ -17,7 +16,7 @@ class PopulatorTests(unittest.TestCase):
         model.database_proxy.initialize(database)
         model.database_proxy.create_tables([model.User, model.Experimentteams, model.Experiment, model.Role])
         self.role = model.Role.create(name=TEST_PI_ROLE, priority=1)
-        self.populator = Populator("TEST_INST", threading.Lock())
+        self.populator = Populator("TEST_INST", "test_connection")
 
     def create_full_record(self, rb_number=TEST_RBNUMBER, user_name=TEST_USER_PI, startdate=TEST_DATE):
         user = model.User.create(name=user_name, organisation="STFC")
@@ -137,7 +136,7 @@ class PopulatorTests(unittest.TestCase):
         remove_old_experiment_teams(1)
         self.assertEqual(0, model.Experimentteams.select().count())
 
-    def test_GIVEN_arecent_experiment_WHEN_remove_old_experiments_called_THEN_no_data_removed(self):
+    def test_GIVEN_a_recent_experiment_WHEN_remove_old_experiments_called_THEN_no_data_removed(self):
         self.create_full_record(startdate=datetime.now())
 
         self.assertEqual(1, model.Experimentteams.select().count())

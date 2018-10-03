@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from suds.client import Client
 import ssl
-from exp_db_populator.userdata import UserData
+from exp_db_populator.data_types import UserData, ExperimentTeamData
 from datetime import datetime, timedelta
 from pykeepass import PyKeePass
-from exp_db_populator.database_model import User, Experiment
+from exp_db_populator.database_model import Experiment
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
@@ -85,20 +85,23 @@ def reformat_data(teams, dates, local_contacts):
         # TODO: More validation on incoming data
 
         for date in dates:
+
             experiments.append({Experiment.experimentid: date['rbNumber'],
                                 Experiment.startdate: date['scheduledDate'],
                                 Experiment.duration: date['timeAllocated']})
+
             start_dates[date['rbNumber']] = date['scheduledDate']
 
         for user in local_contacts:
             rb_number = user['rbNumber']
-            user_data = UserData(user['name'], LOCAL_ORG, "Contact", rb_number, start_dates[rb_number])
-            experiment_teams.append(user_data)
+            user_data = UserData(user['name'], LOCAL_ORG)
+            experiment_teams.append(ExperimentTeamData(user_data, "Contact", rb_number, start_dates[rb_number]))
 
         for team in teams:
             rb_number = team['rbNumber']
             for user in get_experimenters(team):
-                experiment_teams.append(UserData(user['name'], user['organisation'], user['role'],
+                user_data = UserData(user['name'], user['organisation'])
+                experiment_teams.append(ExperimentTeamData(user_data, user['role'],
                                         rb_number, start_dates[rb_number]))
         return experiments, experiment_teams
     except Exception as e:
