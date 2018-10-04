@@ -5,6 +5,8 @@ from exp_db_populator.data_types import UserData, ExperimentTeamData
 from datetime import datetime, timedelta
 from pykeepass import PyKeePass
 from exp_db_populator.database_model import Experiment
+import os
+import math
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
@@ -22,7 +24,8 @@ if hasattr(ssl, '_create_unverified_context'):
 
 def get_credentials():
     try:
-        db = PyKeePass("exp_db_populator/inst_passwords.kdbx", "reliablebeam")
+        file_dir = os.path.dirname(os.path.realpath(__file__))
+        db = PyKeePass(os.path.join(file_dir, "inst_passwords.kdbx"), "reliablebeam")
         entry = db.find_entries(title="RBFinder", first=True)
         return entry.username, entry.password
     except Exception as e:
@@ -79,6 +82,9 @@ def create_exp_team(user, role, rb_number, rb_start_dates):
     if rb_number not in rb_start_dates:
         raise KeyError("RB number {} could not be found for {}".format(rb_number, user.name))
 
+    # IBEX calls them users, BusApps members
+    if role == "Member":
+        role = "User"
     return [ExperimentTeamData(user, role, rb_number, date) for date in rb_start_dates[rb_number]]
 
 
@@ -91,14 +97,13 @@ def reformat_data(teams, dates, local_contacts):
         # TODO: More validation on incoming data
 
         for date in dates:
-
             experiments.append({Experiment.experimentid: date['rbNumber'],
                                 Experiment.startdate: date['scheduledDate'],
-                                Experiment.duration: date['timeAllocated']})
+                                Experiment.duration: math.ceil(date['timeAllocated'])})
 
             rb_number = date['rbNumber']
-            dates = rb_start_dates.get(rb_number, [])
-            rb_start_dates[rb_number] = dates + [date['scheduledDate']]
+            date_for_rb = rb_start_dates.get(rb_number, [])
+            rb_start_dates[rb_number] = date_for_rb + [date['scheduledDate']]
 
         for user in local_contacts:
             user_data = UserData(user['name'], LOCAL_ORG)

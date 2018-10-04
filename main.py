@@ -4,8 +4,29 @@ import zlib
 import json
 
 
+IGNORE_LIST = ["DEMO", "MUONFE", "ZOOM", "RIKENFE", "SELAB", "EMMA-A"]
+
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
+
+
+def convert_inst_list(value_from_PV):
+    json_string = zlib.decompress(bytes.fromhex(value_from_PV)).decode("utf-8")
+    return json.loads(json_string)
+
+
+def correct_name(old_name):
+    """
+    Some names are different between IBEX and the web data, this function converts these.
+    Args:
+        old_name: The IBEX name
+    Returns:
+        str: The web name
+    """
+    if old_name == "ENGINX":
+        return "ENGIN-X"
+    else:
+        return old_name
 
 
 class InstrumentPopulatorRunner:
@@ -19,8 +40,7 @@ class InstrumentPopulatorRunner:
     def inst_list_callback(self, char_value, **kw):
         if char_value != self.prev_inst_list:
             self.prev_inst_list = char_value
-            insts_json = zlib.decompress(bytes.fromhex(char_value)).decode("utf-8")
-            self.inst_list_changes(json.loads(insts_json))
+            self.inst_list_changes(convert_inst_list(char_value))
 
     def remove_all_populators(self):
         for populator in self.instruments.values():
@@ -33,13 +53,14 @@ class InstrumentPopulatorRunner:
         self.remove_all_populators()
 
         for inst in inst_list:
-            name, host = inst["name"], inst["hostName"]
-            try:
-                new_populator = Populator(name, host)
-                new_populator.start()
-                self.instruments[name] = new_populator
-            except Exception as e:
-                print("Unable to connect to {}".format(name))
+            name, host = correct_name(inst["name"]), inst["hostName"]
+            if name not in IGNORE_LIST:
+                try:
+                    new_populator = Populator(name, host)
+                    new_populator.start()
+                    self.instruments[name] = new_populator
+                except Exception as e:
+                    print("Unable to connect to {}".format(name))
 
 
 if __name__ == '__main__':

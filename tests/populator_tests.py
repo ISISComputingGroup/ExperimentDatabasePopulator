@@ -5,7 +5,7 @@ from exp_db_populator.populator import remove_users_not_referenced, remove_old_e
     remove_experiments_not_referenced, Populator
 from tests.webservices_test_data import *
 from mock import Mock
-from exp_db_populator.data_types import UserData
+from exp_db_populator.data_types import UserData, ExperimentTeamData
 
 
 class PopulatorTests(unittest.TestCase):
@@ -85,12 +85,13 @@ class PopulatorTests(unittest.TestCase):
                  model.Experiment.startdate: TEST_DATE}]
 
     def create_experiment_teams_dictionary(self):
-        user = Mock(UserData)
-        user.rb_number = TEST_RBNUMBER
-        user.role_id = self.role.roleid
-        user.start_date = TEST_DATE
-        user.user_id = 1
-        return [user]
+        exp_team_data = Mock(ExperimentTeamData)
+        exp_team_data.rb_number = TEST_RBNUMBER
+        exp_team_data.role_id = self.role.roleid
+        exp_team_data.start_date = TEST_DATE
+        exp_team_data.user = Mock(UserData)
+        exp_team_data.user.user_id = 1
+        return [exp_team_data]
 
     def test_WHEN_populate_called_with_experiments_and_no_teams_THEN_exception_raised(self):
         experiments = self.create_experiments_dictionary()

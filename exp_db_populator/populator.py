@@ -3,7 +3,7 @@ from exp_db_populator.database_model import User, Experiment, Experimentteams, d
 from datetime import datetime, timedelta
 import threading
 from time import sleep
-from peewee import MySQLDatabase
+from peewee import MySQLDatabase, chunked
 
 AGE_OF_EXPIRATION = 100 # How old (in days) the startdate of an experiment must be before it is removed from the database
 POLLING_TIME = 3600 # Time in seconds between polling the website
@@ -23,6 +23,10 @@ def remove_old_experiment_teams(age):
     Experimentteams.delete().where(Experimentteams.startdate < date).execute()
 
 
+def create_database(instrument_host):
+    return MySQLDatabase("exp_data", user="exp_write", password="exp_write_pass", host=instrument_host)
+
+
 class Populator(threading.Thread):
     running = True
 
@@ -31,9 +35,9 @@ class Populator(threading.Thread):
         self.prev_result = ""
         self.instrument_host = instrument_host
         self.instrument_name = instrument_name
-
+        self.database = create_database(instrument_host)
         print("Creating connection to {}".format(instrument_host))
-        self.database = MySQLDatabase("exp_data", user="exp_write", password="exp_write_pass", host=instrument_host)
+
 
     def populate(self, experiments, experiment_teams):
         """
@@ -46,33 +50,35 @@ class Populator(threading.Thread):
         if not experiments or not experiment_teams:
             raise KeyError("Experiment without team or vice versa")
 
-        teams_update = []
+        for batch in chunked(experiments, 100):
+            Experiment.insert_many(batch).on_conflict_replace().execute()
 
-        # TODO: Remove old experiments first
+        teams_update = [{Experimentteams.experimentid: exp_team.rb_number,
+                         Experimentteams.roleid: exp_team.role_id,
+                         Experimentteams.startdate: exp_team.start_date,
+                         Experimentteams.userid: exp_team.user.user_id}
+                        for exp_team in experiment_teams]
 
-        for exp_team in experiment_teams:
-            teams_update.append({Experimentteams.experimentid: exp_team.rb_number,
-                                 Experimentteams.roleid: exp_team.role_id,
-                                 Experimentteams.startdate: exp_team.start_date,
-                                 Experimentteams.userid: exp_team.user.user_id})
-
-        Experiment.insert_many(experiments).on_conflict_replace().execute()
-        Experimentteams.insert_many(teams_update).on_conflict_ignore().execute()
+        for batch in chunked(teams_update, 100):
+            Experimentteams.insert_many(batch).on_conflict_ignore().execute()
 
     def cleanup_old_data(self):
         remove_old_experiment_teams(AGE_OF_EXPIRATION)
         remove_experiments_not_referenced()
         remove_users_not_referenced()
 
+    def get_from_web_and_populate(self):
+        experiments, experiment_teams = gather_data_and_format(self.instrument_name)
+        self.populate(experiments, experiment_teams)
+        self.cleanup_old_data()
+
     def run(self):
         while self.running:
             print("Performing hourly update for {}".format(self.instrument_name))
             try:
-                experiments, experiment_teams = gather_data_and_format(self.instrument_name)
                 database_proxy.initialize(self.database)
                 with database_proxy:
-                    self.populate(experiments, experiment_teams)
-                    self.cleanup_old_data()
+                    self.get_from_web_and_populate()
                 database_proxy.initialize(None) # Ensure no other populators send to the wrong database
             except Exception as e:
                 print("{} unable to populate database: {}".format(self.instrument_name, e))
