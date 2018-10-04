@@ -75,12 +75,18 @@ def get_data_from_web(instrument, client, session_id):
         print('Error gathering data from web services: {}'.format(e))
         raise e
 
+def create_exp_team(user, role, rb_number, rb_start_dates):
+    if rb_number not in rb_start_dates:
+        raise KeyError("RB number {} could not be found for {}".format(rb_number, user.name))
+
+    return [ExperimentTeamData(user, role, rb_number, date) for date in rb_start_dates[rb_number]]
+
 
 def reformat_data(teams, dates, local_contacts):
     try:
-        start_dates = dict()
+        rb_start_dates = dict()
         experiments = []
-        experiment_teams = []
+        exp_teams = []
 
         # TODO: More validation on incoming data
 
@@ -90,20 +96,20 @@ def reformat_data(teams, dates, local_contacts):
                                 Experiment.startdate: date['scheduledDate'],
                                 Experiment.duration: date['timeAllocated']})
 
-            start_dates[date['rbNumber']] = date['scheduledDate']
+            rb_number = date['rbNumber']
+            dates = rb_start_dates.get(rb_number, [])
+            rb_start_dates[rb_number] = dates + [date['scheduledDate']]
 
         for user in local_contacts:
-            rb_number = user['rbNumber']
             user_data = UserData(user['name'], LOCAL_ORG)
-            experiment_teams.append(ExperimentTeamData(user_data, "Contact", rb_number, start_dates[rb_number]))
+            exp_teams.extend(create_exp_team(user_data, "Contact", user['rbNumber'], rb_start_dates))
 
         for team in teams:
-            rb_number = team['rbNumber']
             for user in get_experimenters(team):
                 user_data = UserData(user['name'], user['organisation'])
-                experiment_teams.append(ExperimentTeamData(user_data, user['role'],
-                                        rb_number, start_dates[rb_number]))
-        return experiments, experiment_teams
+                exp_teams.extend(create_exp_team(user_data, user["role"], team['rbNumber'], rb_start_dates))
+
+        return experiments, exp_teams
     except Exception as e:
         print('Could not reformat data: {}'.format(e))
         raise e

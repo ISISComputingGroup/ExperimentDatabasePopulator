@@ -41,6 +41,16 @@ class WebServicesReaderTests(unittest.TestCase):
         self.assertEqual(exp_entry[Experiment.startdate], TEST_DATE)
         self.assertEqual(exp_entry[Experiment.duration], TEST_TIMEALLOCATED)
 
+    def test_GIVEN_rb_with_multiple_start_dates_WHEN_data_formatted_THEN_two_experiments_added(self):
+        dates = TEST_DATES + [create_date_data(TEST_RBNUMBER, datetime.now(), 3)]
+        experiments, experiment_teams = reformat_data([], dates, [])
+
+        self.assertEqual(len(experiments), 2)
+        first_exp, second_exp = experiments[0], experiments[1]
+        self.assertEqual(first_exp[Experiment.experimentid], second_exp[Experiment.experimentid])
+        self.assertEqual(first_exp[Experiment.experimentid], TEST_RBNUMBER)
+        self.assertNotEqual(first_exp[Experiment.startdate], second_exp[Experiment.startdate])
+
     def test_GIVEN_multiple_dates_WHEN_data_formatted_THEN_experiment_list_contains_both(self):
         rb, date, duration = 2000, datetime(1992, 2, 7), 10
         dates = TEST_DATES + [create_date_data(rb, date, duration)]
@@ -96,3 +106,25 @@ class WebServicesReaderTests(unittest.TestCase):
 
         self.assertEqual(len(experiment_teams), 2)
         self.assertTrue(expected_user_data == experiment_teams)
+
+    def test_GIVEN_rb_with_multiple_start_dates_WHEN_data_formatted_THEN_two_local_contacts_added(self):
+        dates = TEST_DATES + [create_date_data(TEST_RBNUMBER, datetime.now(), 3)]
+        experiments, experiment_teams = reformat_data([], dates, TEST_CONTACTS)
+
+        self.assertEqual(len(experiment_teams), 2)
+        self.assertTrue(experiment_teams[0].user == experiment_teams[1].user)
+        self.assertEqual(experiment_teams[0].role, experiment_teams[1].role)
+        self.assertEqual(experiment_teams[0].rb_number, experiment_teams[1].rb_number)
+        self.assertNotEqual(experiment_teams[0].start_date, experiment_teams[1].start_date)
+
+    def test_GIVEN_rb_with_multiple_start_dates_WHEN_data_formatted_THEN_two_other_users_added(self):
+        team = get_test_experiment_team([TEST_USER_1])
+        dates = TEST_DATES + [create_date_data(TEST_RBNUMBER, datetime.now(), 3)]
+        experiments, experiment_teams = reformat_data([team], dates, [])
+
+        self.assertEqual(len(experiment_teams), 2)
+        self.assertTrue(experiment_teams[0].user == experiment_teams[1].user)
+        self.assertEqual(experiment_teams[0].role, experiment_teams[1].role)
+        self.assertEqual(experiment_teams[0].rb_number, experiment_teams[1].rb_number)
+        self.assertNotEqual(experiment_teams[0].start_date, experiment_teams[1].start_date)
+
