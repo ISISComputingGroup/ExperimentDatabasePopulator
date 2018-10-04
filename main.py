@@ -1,19 +1,26 @@
 from exp_db_populator.populator import Populator
+import epics
+import zlib
+import json
 
 
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
 
 
-#def get_instrument_list():
-#    inst_list = PV(INST_LIST_PV)
-
 class InstrumentPopulatorRunner:
     instruments = {}
-    prev_inst_list = []
+    prev_inst_list = None
 
     def __init__(self):
-        pass
+        self.inst_list_callback(char_value=epics.caget(INST_LIST_PV, as_string=True))
+        epics.camonitor(INST_LIST_PV, callback=self.inst_list_callback)
+
+    def inst_list_callback(self, char_value, **kw):
+        if char_value != self.prev_inst_list:
+            self.prev_inst_list = char_value
+            insts_json = zlib.decompress(bytes.fromhex(char_value)).decode("utf-8")
+            self.inst_list_changes(json.loads(insts_json))
 
     def remove_all_populators(self):
         for populator in self.instruments.values():
@@ -22,8 +29,6 @@ class InstrumentPopulatorRunner:
         self.instruments.clear()
 
     def inst_list_changes(self, inst_list):
-        self.prev_inst_list = inst_list
-
         # Easiest way to make sure all populators are up to date is stop them all and start them again
         self.remove_all_populators()
 
