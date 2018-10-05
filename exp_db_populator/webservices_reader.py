@@ -3,9 +3,9 @@ from suds.client import Client
 import ssl
 from exp_db_populator.data_types import UserData, ExperimentTeamData
 from datetime import datetime, timedelta
-from pykeepass import PyKeePass
+from exp_db_populator.passwords.password_reader import get_credentials
 from exp_db_populator.database_model import Experiment
-import os
+from exp_db_populator.data_types import CREDS_GROUP
 import math
 
 LOCAL_ORG = "Science and Technology Facilities Council"
@@ -20,17 +20,6 @@ BUS_APPS_API = BUS_APPS_SITE + "ScheduleSessionBeanService/ScheduleSessionBean?w
 # This is a workaround because the web service does not have a valid certificate
 if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
-
-
-def get_credentials():
-    try:
-        file_dir = os.path.dirname(os.path.realpath(__file__))
-        db = PyKeePass(os.path.join(file_dir, "passwords", "inst_passwords.kdbx"), "reliablebeam")
-        entry = db.find_entries(title="RBFinder", first=True)
-        return entry.username, entry.password
-    except Exception as e:
-        print("Failed to get username and password: {}".format(e))
-        raise e
 
 
 def get_start_and_end(date, time_range_days):
@@ -63,7 +52,7 @@ def connect():
         tuple: the client and the associated session id.
     """
     try:
-        username, password = get_credentials()
+        username, password = get_credentials(CREDS_GROUP, "WebRead")
 
         session_id = Client(BUS_APPS_AUTH).service.login(username, password)
         client = Client(BUS_APPS_API)

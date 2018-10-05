@@ -1,5 +1,8 @@
 from exp_db_populator.database_model import Role, User
 
+# The group in which the credentials are stored
+CREDS_GROUP = "ExpDatabasePopulator"
+
 
 class UserData:
     """

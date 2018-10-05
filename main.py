@@ -3,7 +3,7 @@ import epics
 import zlib
 import json
 
-
+# Instruments to ignore
 IGNORE_LIST = ["DEMO", "MUONFE", "ZOOM", "RIKENFE", "SELAB", "EMMA-A"]
 
 # PV that contains the instrument list
