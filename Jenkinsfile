@@ -5,7 +5,7 @@ pipeline {
   // agent defines where the pipeline will run.
   agent {  
     label {
-      label "Exp_DB_Populator"
+      label "Python_3_tests"
       // Use custom workspace to avoid issue with long filepaths on Win32
       customWorkspace "C:/Exp_DB_Populator/${env.BRANCH_NAME}"
     }
