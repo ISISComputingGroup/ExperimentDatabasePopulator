@@ -1,5 +1,7 @@
 from exp_db_populator.webservices_reader import gather_data_and_format
 from exp_db_populator.database_model import User, Experiment, Experimentteams, database_proxy
+from exp_db_populator.passwords.password_reader import get_credentials
+from exp_db_populator.data_types import CREDS_GROUP
 from datetime import datetime, timedelta
 import threading
 from time import sleep
@@ -24,7 +26,8 @@ def remove_old_experiment_teams(age):
 
 
 def create_database(instrument_host):
-    return MySQLDatabase("exp_data", user="exp_write", password="exp_write_pass", host=instrument_host)
+    username, password = get_credentials(CREDS_GROUP, "ExpDatabaseWrite")
+    return MySQLDatabase("exp_data", user=username, password=password, host=instrument_host)
 
 
 class Populator(threading.Thread):

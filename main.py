@@ -40,7 +40,7 @@ class InstrumentPopulatorRunner:
     instruments = {}
     prev_inst_list = None
 
-    def __init__(self):
+    def start_inst_list_monitor(self):
         self.inst_list_callback(char_value=epics.caget(INST_LIST_PV, as_string=True))
         epics.camonitor(INST_LIST_PV, callback=self.inst_list_callback)
 
@@ -86,6 +86,7 @@ class InstrumentPopulatorRunner:
 
 if __name__ == '__main__':
     main = InstrumentPopulatorRunner()
+    main.start_inst_list_monitor()
     main.inst_list_changes([{"name": "LARMOR", "hostName": "localhost"}])
 
     running = True

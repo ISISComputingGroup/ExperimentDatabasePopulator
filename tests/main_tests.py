@@ -3,6 +3,7 @@ from mock import patch, Mock
 from main import InstrumentPopulatorRunner
 from exp_db_populator.populator import Populator
 
+
 class MainTest(unittest.TestCase):
     def setUp(self):
         self.inst_pop_runner = InstrumentPopulatorRunner()

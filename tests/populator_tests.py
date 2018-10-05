@@ -4,7 +4,7 @@ from peewee import SqliteDatabase
 from exp_db_populator.populator import remove_users_not_referenced, remove_old_experiment_teams, \
     remove_experiments_not_referenced, Populator
 from tests.webservices_test_data import *
-from mock import Mock
+from mock import Mock, patch
 from exp_db_populator.data_types import UserData, ExperimentTeamData
 
 
@@ -16,7 +16,14 @@ class PopulatorTests(unittest.TestCase):
         model.database_proxy.initialize(database)
         model.database_proxy.create_tables([model.User, model.Experimentteams, model.Experiment, model.Role])
         self.role = model.Role.create(name=TEST_PI_ROLE, priority=1)
+
+        patch_db = patch('exp_db_populator.populator.create_database')
+        patch_db.return_value = database
+        patch_db.start()
+
         self.populator = Populator("TEST_INST", "test_connection")
+
+        self.addCleanup(patch_db.stop)
 
     def create_full_record(self, rb_number=TEST_RBNUMBER, user_name=TEST_USER_PI, startdate=TEST_DATE):
         user = model.User.create(name=user_name, organisation="STFC")
