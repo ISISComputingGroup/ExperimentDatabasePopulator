@@ -5,5 +5,4 @@ pymysql
 mock
 xmlrunner
 pyepics
-zlib
 json
