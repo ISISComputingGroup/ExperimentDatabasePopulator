@@ -37,12 +37,12 @@ def create_database(instrument_host):
 class Populator(threading.Thread):
     running = True
 
-    def __init__(self, instrument_name, instrument_host):
+    def __init__(self, instrument_name, instrument_host, db_lock):
         threading.Thread.__init__(self, daemon=True)
-        self.prev_result = ""
         self.instrument_host = instrument_host
         self.instrument_name = instrument_name
         self.database = create_database(instrument_host)
+        self.db_lock = db_lock
         print("Creating connection to {}".format(instrument_host))
 
     def populate(self, experiments, experiment_teams):
@@ -81,8 +81,11 @@ class Populator(threading.Thread):
         Gets the data from the web and populates the database.
         """
         experiments, experiment_teams = gather_data_and_format(self.instrument_name)
-        self.populate(experiments, experiment_teams)
-        self.cleanup_old_data()
+        with self.db_lock:
+            database_proxy.initialize(self.database)
+            self.populate(experiments, experiment_teams)
+            self.cleanup_old_data()
+            database_proxy.initialize(None)  # Ensure no other populators send to the wrong database
 
     def run(self):
         """
@@ -91,14 +94,12 @@ class Populator(threading.Thread):
         while self.running:
             print("Performing hourly update for {}".format(self.instrument_name))
             try:
-                database_proxy.initialize(self.database)
-                with database_proxy:
-                    self.get_from_web_and_populate()
-                database_proxy.initialize(None) # Ensure no other populators send to the wrong database
+                self.get_from_web_and_populate()
+                print("{} experiment data updated successfully".format(self.instrument_name))
             except Exception as e:
                 print("{} unable to populate database: {}".format(self.instrument_name, e))
+                print("Will try again in {} seconds".format(POLLING_TIME))
 
-            print("{} experiment data updated successfully".format(self.instrument_name))
             for i in range(POLLING_TIME):
                 sleep(1)
                 if not self.running:

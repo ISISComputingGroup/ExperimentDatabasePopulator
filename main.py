@@ -2,6 +2,7 @@ from exp_db_populator.populator import Populator
 import epics
 import zlib
 import json
+import threading
 
 # Instruments to ignore
 IGNORE_LIST = ["DEMO", "MUONFE", "ZOOM", "RIKENFE", "SELAB", "EMMA-A"]
@@ -9,6 +10,7 @@ IGNORE_LIST = ["DEMO", "MUONFE", "ZOOM", "RIKENFE", "SELAB", "EMMA-A"]
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
 
+DEBUG = False
 
 def convert_inst_list(value_from_PV):
     """
@@ -39,6 +41,7 @@ class InstrumentPopulatorRunner:
     """
     instruments = {}
     prev_inst_list = None
+    db_lock = threading.Lock()
 
     def start_inst_list_monitor(self):
         self.inst_list_callback(char_value=epics.caget(INST_LIST_PV, as_string=True))
@@ -77,7 +80,7 @@ class InstrumentPopulatorRunner:
             name, host = correct_name(inst["name"]), inst["hostName"]
             if name not in IGNORE_LIST:
                 try:
-                    new_populator = Populator(name, host)
+                    new_populator = Populator(name, host, self.db_lock)
                     new_populator.start()
                     self.instruments[name] = new_populator
                 except Exception as e:
@@ -86,8 +89,10 @@ class InstrumentPopulatorRunner:
 
 if __name__ == '__main__':
     main = InstrumentPopulatorRunner()
-    main.start_inst_list_monitor()
-    main.inst_list_changes([{"name": "LARMOR", "hostName": "localhost"}])
+    if DEBUG:
+        main.inst_list_changes([{"name": "LARMOR", "hostName": "localhost"}])
+    else:
+        main.start_inst_list_monitor()
 
     running = True
     menu_string = 'Enter: M to display menu, U to force update from instrument list or Q to Quit\n '

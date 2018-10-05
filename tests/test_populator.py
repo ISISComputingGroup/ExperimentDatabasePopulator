@@ -6,6 +6,8 @@ from exp_db_populator.populator import remove_users_not_referenced, remove_old_e
 from tests.webservices_test_data import *
 from mock import Mock, patch
 from exp_db_populator.data_types import UserData, ExperimentTeamData
+from time import sleep
+import threading
 
 
 class PopulatorTests(unittest.TestCase):
@@ -21,7 +23,8 @@ class PopulatorTests(unittest.TestCase):
         patch_db.return_value = database
         patch_db.start()
 
-        self.populator = Populator("TEST_INST", "test_connection")
+        self.lock = threading.Lock()
+        self.populator = Populator("TEST_INST", "test_connection", self.lock)
 
         self.addCleanup(patch_db.stop)
 
@@ -150,3 +153,47 @@ class PopulatorTests(unittest.TestCase):
         self.assertEqual(1, model.Experimentteams.select().count())
         remove_old_experiment_teams(1)
         self.assertEqual(1, model.Experimentteams.select().count())
+
+    @patch('exp_db_populator.populator.gather_data_and_format')
+    def test_GIVEN_db_locked_WHEN_populator_running_THEN_does_not_write_to_db(self, gather):
+        gather.side_effect = lambda x: (x, x)
+
+        pop_populate = Mock()
+
+        self.populator.cleanup_old_data = lambda: sleep(1)
+        self.populator.populate = pop_populate
+
+        thread_one = threading.Thread(target=self.populator.get_from_web_and_populate)
+
+        with self.lock:
+            thread_one.start()
+            gather.assert_called()
+            pop_populate.assert_not_called()
+
+        sleep(0.5)
+        pop_populate.assert_called()
+
+    @patch('exp_db_populator.populator.gather_data_and_format')
+    def test_GIVEN_two_populators_WHEN_one_writing_to_database_THEN_the_other_does_not(self, gather):
+        gather.side_effect = lambda x: (x, x)
+        second_pop = Populator("SECOND_INST", "test_connection", self.lock)
+
+        pop_populate = Mock()
+
+        self.populator.cleanup_old_data = lambda: sleep(0.5)
+        self.populator.populate = pop_populate
+
+        second_pop.cleanup_old_data = Mock()
+        second_pop.populate = pop_populate
+
+        thread_one = threading.Thread(target=self.populator.get_from_web_and_populate)
+        thread_two = threading.Thread(target=second_pop.get_from_web_and_populate)
+
+        thread_one.start()
+        thread_two.start()
+
+        pop_populate.assert_called_once_with(self.populator.instrument_name, self.populator.instrument_name)
+
+        thread_one.join()
+        sleep(0.2)
+        pop_populate.assert_called_with("SECOND_INST", "SECOND_INST")

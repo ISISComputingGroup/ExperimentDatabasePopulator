@@ -86,7 +86,7 @@ for inst in inst_list:
 
         print("Getting web data for {}".format(inst["name"]))
 
-        populator = Populator(inst["name"], ":memory:")
+        populator = Populator(inst["name"], ":memory:", None)
         populator.get_from_web_and_populate()
 
         web_data = get_data()
