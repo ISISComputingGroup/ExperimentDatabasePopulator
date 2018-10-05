@@ -25,7 +25,7 @@ if hasattr(ssl, '_create_unverified_context'):
 def get_credentials():
     try:
         file_dir = os.path.dirname(os.path.realpath(__file__))
-        db = PyKeePass(os.path.join(file_dir, "inst_passwords.kdbx"), "reliablebeam")
+        db = PyKeePass(os.path.join(file_dir, "passwords", "inst_passwords.kdbx"), "reliablebeam")
         entry = db.find_entries(title="RBFinder", first=True)
         return entry.username, entry.password
     except Exception as e:
