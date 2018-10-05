@@ -43,10 +43,10 @@ pipeline {
         }
         
         bat """
-            C:\Python36\Scripts\pip.exe install virtualenv
-            C:\Python36\Scripts\virtualenv.exe my_python
-            call my_python\Scripts\activate.bat
-            call my_python\Scripts\pip.exe install -r requirements.txt
+            C:/Python36/Scripts/pip.exe install virtualenv
+            C:/Python36/Scripts/virtualenv.exe my_python
+            call my_python/Scripts/activate.bat
+            call my_python/Scripts/pip.exe install -r requirements.txt
             python.exe run_tests.py --output_dir test-reports
             """
       }
