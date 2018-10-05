@@ -3,9 +3,9 @@ from exp_db_populator.database_model import Experiment
 from tests.webservices_test_data import *
 from exp_db_populator.data_types import UserData, ExperimentTeamData
 from exp_db_populator.webservices_reader import LOCAL_ORG, LOCAL_ROLE, reformat_data, \
-    get_start_and_end, get_experimenters, get_credentials
+    get_start_and_end, get_experimenters, create_exp_team
 from datetime import datetime, timedelta
-from mock import patch, MagicMock
+from mock import MagicMock
 
 
 class WebServicesReaderTests(unittest.TestCase):
@@ -128,3 +128,8 @@ class WebServicesReaderTests(unittest.TestCase):
         self.assertEqual(experiment_teams[0].rb_number, experiment_teams[1].rb_number)
         self.assertNotEqual(experiment_teams[0].start_date, experiment_teams[1].start_date)
 
+    def test_WHEN_exp_member_created_with_member_role_THEN_becomes_user(self):
+        exp_team_data = create_exp_team(MagicMock(), "Member", TEST_RBNUMBER, {TEST_RBNUMBER: [TEST_DATE]})
+
+        self.assertEqual(1, len(exp_team_data))
+        self.assertEqual("User", exp_team_data[0].role)

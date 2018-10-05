@@ -45,7 +45,10 @@ def get_experimenters(team):
         return []
 
 
-def get_date_range(client):
+def create_date_range(client):
+    """
+    Creates a date range in a format for the web client to understand.
+    """
     date_range = client.factory.create('dateRange')
     start, end = get_start_and_end(datetime.now(), RELEVANT_DATE_RANGE)
     date_range.startDate = start.strftime(DATE_TIME_FORMAT)
@@ -54,6 +57,11 @@ def get_date_range(client):
 
 
 def connect():
+    """
+    Connects to the busapps website.
+    Returns:
+        tuple: the client and the associated session id.
+    """
     try:
         username, password = get_credentials()
 
@@ -67,8 +75,17 @@ def connect():
 
 
 def get_data_from_web(instrument, client, session_id):
+    """
+    Args:
+        instrument: The name of the instrument to get the data for.
+        client: The client that has connected to the web.
+        session_id: The id of the web session.
+
+    Returns:
+        tuple: The teams, dates and local_contacts data
+    """
     try:
-        date_range = get_date_range(client)
+        date_range = create_date_range(client)
 
         teams = client.service.getExperimentTeamsForInstrument(session_id, instrument, date_range)
         dates = client.service.getExperimentDatesForInstrument(session_id, instrument, date_range)
@@ -82,19 +99,29 @@ def create_exp_team(user, role, rb_number, rb_start_dates):
     if rb_number not in rb_start_dates:
         raise KeyError("RB number {} could not be found for {}".format(rb_number, user.name))
 
-    # IBEX calls them users, BusApps members
+    # IBEX calls them users, BusApps calls them members
     if role == "Member":
         role = "User"
+
     return [ExperimentTeamData(user, role, rb_number, date) for date in rb_start_dates[rb_number]]
 
 
 def reformat_data(teams, dates, local_contacts):
+    """
+    Reformats the data from the way the website returns it to the way the database wants it.
+    Args:
+        teams (list): List of teams related to an experiment .
+        dates (list): List of all of the experiments and their dates.
+        local_contacts (list): List of local contacts for all experiments.
+
+    Returns:
+        tuple (list, list): A list of the experiments and their associated data and a list of the experiment teams.
+                            Experiment teams contains information on each experiment and which users are related to it.
+    """
     try:
         rb_start_dates = dict()
         experiments = []
         exp_teams = []
-
-        # TODO: More validation on incoming data
 
         for date in dates:
             experiments.append({Experiment.experimentid: date['rbNumber'],

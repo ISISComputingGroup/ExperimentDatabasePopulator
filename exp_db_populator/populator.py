@@ -38,7 +38,6 @@ class Populator(threading.Thread):
         self.database = create_database(instrument_host)
         print("Creating connection to {}".format(instrument_host))
 
-
     def populate(self, experiments, experiment_teams):
         """
         Populates the database with experiment data.
@@ -63,16 +62,25 @@ class Populator(threading.Thread):
             Experimentteams.insert_many(batch).on_conflict_ignore().execute()
 
     def cleanup_old_data(self):
+        """
+        Removes old data from the database.
+        """
         remove_old_experiment_teams(AGE_OF_EXPIRATION)
         remove_experiments_not_referenced()
         remove_users_not_referenced()
 
     def get_from_web_and_populate(self):
+        """
+        Gets the data from the web and populates the database.
+        """
         experiments, experiment_teams = gather_data_and_format(self.instrument_name)
         self.populate(experiments, experiment_teams)
         self.cleanup_old_data()
 
     def run(self):
+        """
+        Periodically runs to populate the database.
+        """
         while self.running:
             print("Performing hourly update for {}".format(self.instrument_name))
             try:

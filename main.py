@@ -11,6 +11,13 @@ INST_LIST_PV = "CS:INSTLIST"
 
 
 def convert_inst_list(value_from_PV):
+    """
+    Converts the instrument list coming from the PV into a dictionary.
+    Args:
+        value_from_PV: The raw value from the PV.
+    Returns:
+        dict: The instrument information.
+    """
     json_string = zlib.decompress(bytes.fromhex(value_from_PV)).decode("utf-8")
     return json.loads(json_string)
 
@@ -23,13 +30,13 @@ def correct_name(old_name):
     Returns:
         str: The web name
     """
-    if old_name == "ENGINX":
-        return "ENGIN-X"
-    else:
-        return old_name
+    return "ENGIN-X" if old_name == "ENGINX" else old_name
 
 
 class InstrumentPopulatorRunner:
+    """
+    Responsible for managing the threads that will populate each instrument.
+    """
     instruments = {}
     prev_inst_list = None
 
@@ -38,17 +45,31 @@ class InstrumentPopulatorRunner:
         epics.camonitor(INST_LIST_PV, callback=self.inst_list_callback)
 
     def inst_list_callback(self, char_value, **kw):
+        """
+        Called when the instrument list PV changes value.
+        Args:
+            char_value: The string representation of the PV data.
+            **kw: The module will also send other info about the PV, we capture this and don't use it.
+        """
         if char_value != self.prev_inst_list:
             self.prev_inst_list = char_value
             self.inst_list_changes(convert_inst_list(char_value))
 
     def remove_all_populators(self):
+        """
+        Stops all populators and clears the cached list.
+        """
         for populator in self.instruments.values():
             populator.running = False
             populator.join()
         self.instruments.clear()
 
     def inst_list_changes(self, inst_list):
+        """
+        Starts a new populator thread for each instrument.
+        Args:
+            inst_list (dict): Information about all instruments.
+        """
         # Easiest way to make sure all populators are up to date is stop them all and start them again
         self.remove_all_populators()
 
