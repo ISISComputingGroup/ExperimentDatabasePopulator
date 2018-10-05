@@ -1,11 +1,15 @@
 from exp_db_populator.webservices_reader import gather_data_and_format
 from exp_db_populator.database_model import User, Experiment, Experimentteams, database_proxy
-from exp_db_populator.passwords.password_reader import get_credentials
 from exp_db_populator.data_types import CREDS_GROUP
 from datetime import datetime, timedelta
 import threading
 from time import sleep
 from peewee import MySQLDatabase, chunked
+
+try:
+    from exp_db_populator.passwords.password_reader import get_credentials
+except ImportError as e:
+    print("Password submodule not found, will not be able to write to databases")
 
 AGE_OF_EXPIRATION = 100 # How old (in days) the startdate of an experiment must be before it is removed from the database
 POLLING_TIME = 3600 # Time in seconds between polling the website
