@@ -3,7 +3,7 @@
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from main import convert_inst_list, INST_LIST_PV, correct_name, IGNORE_LIST
+from main import convert_inst_list, INST_LIST_PV, correct_name
 from mock import patch
 import epics
 from exp_db_populator.populator import Populator
@@ -72,7 +72,7 @@ inst_list = convert_inst_list(epics.caget(INST_LIST_PV, as_string=True))
 
 for inst in inst_list:
     inst["name"] = correct_name(inst["name"])
-    if inst["name"] in IGNORE_LIST:
+    if not inst["isScheduled"]:
         continue
 
     in_memory_db = SqliteDatabase(":memory:")

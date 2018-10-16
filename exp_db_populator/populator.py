@@ -5,11 +5,12 @@ from datetime import datetime, timedelta
 import threading
 from time import sleep
 from peewee import MySQLDatabase, chunked
+import logging
 
 try:
     from exp_db_populator.passwords.password_reader import get_credentials
 except ImportError as e:
-    print("Password submodule not found, will not be able to write to databases")
+    logging.error("Password submodule not found, will not be able to write to databases")
 
 AGE_OF_EXPIRATION = 100 # How old (in days) the startdate of an experiment must be before it is removed from the database
 POLLING_TIME = 3600 # Time in seconds between polling the website
@@ -43,7 +44,7 @@ class Populator(threading.Thread):
         self.instrument_name = instrument_name
         self.database = create_database(instrument_host)
         self.db_lock = db_lock
-        print("Creating connection to {}".format(instrument_host))
+        logging.info("Creating connection to {}".format(instrument_host))
 
     def populate(self, experiments, experiment_teams):
         """
@@ -92,13 +93,13 @@ class Populator(threading.Thread):
         Periodically runs to populate the database.
         """
         while self.running:
-            print("Performing hourly update for {}".format(self.instrument_name))
+            logging.info("Performing hourly update for {}".format(self.instrument_name))
             try:
                 self.get_from_web_and_populate()
-                print("{} experiment data updated successfully".format(self.instrument_name))
-            except Exception as e:
-                print("{} unable to populate database: {}".format(self.instrument_name, e))
-                print("Will try again in {} seconds".format(POLLING_TIME))
+                logging.info("{} experiment data updated successfully".format(self.instrument_name))
+            except Exception:
+                logging.exception("{} unable to populate database, will try again in {} seconds".format(
+                    self.instrument_name, POLLING_TIME))
 
             for i in range(POLLING_TIME):
                 sleep(1)

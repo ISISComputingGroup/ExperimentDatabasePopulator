@@ -3,14 +3,27 @@ import epics
 import zlib
 import json
 import threading
+import logging
+import os
 
-# Instruments to ignore
-IGNORE_LIST = ["DEMO", "MUONFE", "ZOOM", "RIKENFE", "SELAB", "EMMA-A", "IRIS_SETUP"]
 
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
 
 DEBUG = False
+
+log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
+os.makedirs(log_folder, exist_ok=True)
+log_filepath = os.path.join(log_folder, 'Exp_DB_Pop.log')
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.handlers.TimedRotatingFileHandler(log_filepath, when='midnight', backupCount=30),
+        logging.StreamHandler()
+    ]
+)
+
 
 def convert_inst_list(value_from_PV):
     """
@@ -81,20 +94,20 @@ class InstrumentPopulatorRunner:
         self.remove_all_populators()
 
         for inst in inst_list:
-            name, host = correct_name(inst["name"]), inst["hostName"]
-            if name not in IGNORE_LIST:
+            if inst["isScheduled"]:
+                name, host = correct_name(inst["name"]), inst["hostName"]
                 try:
                     new_populator = Populator(name, host, self.db_lock)
                     new_populator.start()
                     self.instruments[name] = new_populator
                 except Exception as e:
-                    print("Unable to connect to {}: {}".format(name, e))
+                    logging.error("Unable to connect to {}: {}".format(name, e))
 
 
 if __name__ == '__main__':
     main = InstrumentPopulatorRunner()
     if DEBUG:
-        debug_inst_list = [{"name": "LARMOR", "hostName": "localhost"}]
+        debug_inst_list = [{"name": "LARMOR", "hostName": "localhost", "isScheduled": True}]
         main.prev_inst_list = debug_inst_list
         main.inst_list_changes(debug_inst_list)
     else:
@@ -106,11 +119,12 @@ if __name__ == '__main__':
     while running:
         menu_input = input(menu_string).upper()
         if menu_input and isinstance(menu_input, str):
+            logging.info("User entered {}".format(menu_input))
             if menu_input == "Q":
                 main.remove_all_populators()
                 running = False
             elif menu_input == "U":
                 main.inst_list_changes(main.prev_inst_list)
             else:
-                print("Command not recognised.")
+                logging.warning("Command not recognised: {}".format(menu_input))
 

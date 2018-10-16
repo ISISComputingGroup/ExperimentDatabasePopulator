@@ -6,12 +6,12 @@ from datetime import datetime, timedelta
 from exp_db_populator.database_model import Experiment
 from exp_db_populator.data_types import CREDS_GROUP
 import math
-import traceback
+import logging
 
 try:
     from exp_db_populator.passwords.password_reader import get_credentials
 except ImportError as e:
-    print("Password submodule not found, will not be able to read from web")
+    logging.error("Password submodule not found, will not be able to read from web")
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
@@ -64,8 +64,7 @@ def connect():
 
         return client, session_id
     except Exception:
-        print('Error whilst trying to connect to web services:')
-        traceback.print_stack()
+        logging.exception('Error whilst trying to connect to web services:')
         raise
 
 
@@ -87,8 +86,7 @@ def get_data_from_web(instrument, client, session_id):
         local_contacts = client.service.getExperimentLocalContactsForInstrument(session_id, instrument, date_range)
         return teams, dates, local_contacts
     except Exception:
-        print('Error gathering data from web services:')
-        traceback.print_stack()
+        logging.exception('Error gathering data from web services:')
         raise
 
 
@@ -139,9 +137,8 @@ def reformat_data(teams, dates, local_contacts):
                 exp_teams.extend(create_exp_team(user_data, user["role"], team['rbNumber'], rb_start_dates))
 
         return experiments, exp_teams
-    except Exception as e:
-        print('Could not reformat data:')
-        traceback.print_stack()
+    except Exception:
+        logging.exception('Could not reformat data:')
         raise
 
 
