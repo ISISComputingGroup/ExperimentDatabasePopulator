@@ -5,7 +5,7 @@ import json
 import threading
 
 # Instruments to ignore
-IGNORE_LIST = ["DEMO", "MUONFE", "ZOOM", "RIKENFE", "SELAB", "EMMA-A"]
+IGNORE_LIST = ["DEMO", "MUONFE", "ZOOM", "RIKENFE", "SELAB", "EMMA-A", "IRIS_SETUP"]
 
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
@@ -41,7 +41,7 @@ class InstrumentPopulatorRunner:
     """
     instruments = {}
     prev_inst_list = None
-    db_lock = threading.Lock()
+    db_lock = threading.RLock()
 
     def start_inst_list_monitor(self):
         self.inst_list_callback(char_value=epics.caget(INST_LIST_PV, as_string=True))
@@ -54,17 +54,21 @@ class InstrumentPopulatorRunner:
             char_value: The string representation of the PV data.
             **kw: The module will also send other info about the PV, we capture this and don't use it.
         """
-        if char_value != self.prev_inst_list:
-            self.prev_inst_list = char_value
-            self.inst_list_changes(convert_inst_list(char_value))
+        new_inst_list = convert_inst_list(char_value)
+        if new_inst_list != self.prev_inst_list:
+            self.prev_inst_list = new_inst_list
+            self.inst_list_changes(new_inst_list)
 
     def remove_all_populators(self):
         """
         Stops all populators and clears the cached list.
         """
+        # Faster if all threads are stopped first, then joined after.
         for populator in self.instruments.values():
             populator.running = False
-            populator.join()
+
+        [populator.join() for populator in self.instruments.values()]
+
         self.instruments.clear()
 
     def inst_list_changes(self, inst_list):
@@ -84,28 +88,29 @@ class InstrumentPopulatorRunner:
                     new_populator.start()
                     self.instruments[name] = new_populator
                 except Exception as e:
-                    print("Unable to connect to {}".format(name))
+                    print("Unable to connect to {}: {}".format(name, e))
 
 
 if __name__ == '__main__':
     main = InstrumentPopulatorRunner()
     if DEBUG:
-        main.inst_list_changes([{"name": "LARMOR", "hostName": "localhost"}])
+        debug_inst_list = [{"name": "LARMOR", "hostName": "localhost"}]
+        main.prev_inst_list = debug_inst_list
+        main.inst_list_changes(debug_inst_list)
     else:
         main.start_inst_list_monitor()
 
     running = True
-    menu_string = 'Enter: M to display menu, U to force update from instrument list or Q to Quit\n '
+    menu_string = 'Enter U to force update from instrument list or Q to Quit\n '
 
     while running:
         menu_input = input(menu_string).upper()
-        if menu_input and type(menu_input) == str:
+        if menu_input and isinstance(menu_input, str):
             if menu_input == "Q":
+                main.remove_all_populators()
                 running = False
-            elif menu_input == "M":
-                pass
             elif menu_input == "U":
                 main.inst_list_changes(main.prev_inst_list)
             else:
-                print("Command not recognised. Enter M to view menu. ")
+                print("Command not recognised.")
 

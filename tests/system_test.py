@@ -1,5 +1,8 @@
 # A helper test that will compare data web data for each instrument with the data currently on the instrument.
 # Useful for testing against the old system
+import os, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 from main import convert_inst_list, INST_LIST_PV, correct_name, IGNORE_LIST
 from mock import patch
 import epics
@@ -9,10 +12,6 @@ import exp_db_populator.database_model as model
 import csv
 from datetime import datetime
 
-# import logging
-# logger = logging.getLogger('peewee')
-# logger.addHandler(logging.StreamHandler())
-# logger.setLevel(logging.DEBUG)
 
 def get_data():
     exps = model.Experiment.select().order_by(model.Experiment.experimentid, model.Experiment.startdate).dicts().execute()
@@ -22,6 +21,7 @@ def get_data():
                                                         model.Experimentteams.roleid).dicts().execute()
     return {"EXPERIMENT": exps, "USERS": users, "EXP_TEAMS": exp_teams}
 
+
 def write_data_to_file(instrument, data_source, data):
     for k, v in data.items():
         with open("data\{}_{}_{}.csv".format(instrument, k, data_source), 'w') as out:
@@ -29,11 +29,13 @@ def write_data_to_file(instrument, data_source, data):
             dict_writer.writeheader()
             dict_writer.writerows(v)
 
+
 def get_real_data(inst_host):
     db = MySQLDatabase("exp_data", user="report", password="$report", host=inst_host)
     model.database_proxy.initialize(db)
 
     return get_data()
+
 
 def record_the_same(real, web, fields):
     for field in fields:
@@ -46,6 +48,7 @@ def record_the_same(real, web, fields):
         if real[field] != web[field]:
             return False
     return True
+
 
 def check_data(inst, real_data, web_data, table, fields):
     real_exps, web_exps = real_data[table], web_data[table]
@@ -71,9 +74,6 @@ for inst in inst_list:
     inst["name"] = correct_name(inst["name"])
     if inst["name"] in IGNORE_LIST:
         continue
-
-    # if inst["name"] not in ["MAPS"]:
-    #      continue
 
     in_memory_db = SqliteDatabase(":memory:")
     with patch("exp_db_populator.populator.create_database") as create_db:

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from exp_db_populator.database_model import Experiment
 from exp_db_populator.data_types import CREDS_GROUP
 import math
+import traceback
 
 try:
     from exp_db_populator.passwords.password_reader import get_credentials
@@ -62,9 +63,10 @@ def connect():
         client = Client(BUS_APPS_API)
 
         return client, session_id
-    except Exception as e:
-        print('Error whilst trying to connect to web services: {}'.format(e))
-        raise e
+    except Exception:
+        print('Error whilst trying to connect to web services:')
+        traceback.print_stack()
+        raise
 
 
 def get_data_from_web(instrument, client, session_id):
@@ -84,9 +86,11 @@ def get_data_from_web(instrument, client, session_id):
         dates = client.service.getExperimentDatesForInstrument(session_id, instrument, date_range)
         local_contacts = client.service.getExperimentLocalContactsForInstrument(session_id, instrument, date_range)
         return teams, dates, local_contacts
-    except Exception as e:
-        print('Error gathering data from web services: {}'.format(e))
-        raise e
+    except Exception:
+        print('Error gathering data from web services:')
+        traceback.print_stack()
+        raise
+
 
 def create_exp_team(user, role, rb_number, rb_start_dates):
     if rb_number not in rb_start_dates:
@@ -112,7 +116,7 @@ def reformat_data(teams, dates, local_contacts):
                             Experiment teams contains information on each experiment and which users are related to it.
     """
     try:
-        rb_start_dates = dict()
+        rb_start_dates = {}
         experiments = []
         exp_teams = []
 
@@ -136,8 +140,9 @@ def reformat_data(teams, dates, local_contacts):
 
         return experiments, exp_teams
     except Exception as e:
-        print('Could not reformat data: {}'.format(e))
-        raise e
+        print('Could not reformat data:')
+        traceback.print_stack()
+        raise
 
 
 def gather_data_and_format(instrument_name):
