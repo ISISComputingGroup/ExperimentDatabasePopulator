@@ -4,6 +4,7 @@ import zlib
 import json
 import threading
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import os
 
 
@@ -19,7 +20,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.handlers.TimedRotatingFileHandler(log_filepath, when='midnight', backupCount=30),
+        TimedRotatingFileHandler(log_filepath, when='midnight', backupCount=30),
         logging.StreamHandler()
     ]
 )
