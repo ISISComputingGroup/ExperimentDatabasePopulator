@@ -6,15 +6,17 @@ import threading
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
+from six.moves import input
 
 
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
 
-DEBUG = False
+DEBUG = True
 
 log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
-os.makedirs(log_folder, exist_ok=True)
+if not os.path.exists(log_folder):
+    os.makedirs(log_folder)
 log_filepath = os.path.join(log_folder, 'Exp_DB_Pop.log')
 logging.basicConfig(
     level=logging.INFO,

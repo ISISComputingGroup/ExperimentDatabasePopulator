@@ -39,7 +39,8 @@ class Populator(threading.Thread):
     running = True
 
     def __init__(self, instrument_name, instrument_host, db_lock):
-        threading.Thread.__init__(self, daemon=True)
+        threading.Thread.__init__(self)
+        self.daemon = True
         self.instrument_host = instrument_host
         self.instrument_name = instrument_name
         self.database = create_database(instrument_host)

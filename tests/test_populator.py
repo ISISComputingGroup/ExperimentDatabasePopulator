@@ -167,6 +167,7 @@ class PopulatorTests(unittest.TestCase):
 
         with self.lock:
             thread_one.start()
+            sleep(0.5)
             gather.assert_called()
             pop_populate.assert_not_called()
 

@@ -5,3 +5,4 @@ pymysql
 mock
 xmlrunner
 pyepics
+six
