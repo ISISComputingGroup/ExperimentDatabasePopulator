@@ -12,7 +12,7 @@ from six.moves import input
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
 
-DEBUG = True
+DEBUG = False
 
 log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
 if not os.path.exists(log_folder):
