@@ -38,12 +38,13 @@ def create_database(instrument_host):
 class Populator(threading.Thread):
     running = True
 
-    def __init__(self, instrument_name, instrument_host, db_lock):
+    def __init__(self, instrument_name, instrument_host, db_lock, run_continuous=False):
         threading.Thread.__init__(self)
         self.daemon = True
         self.instrument_host = instrument_host
         self.instrument_name = instrument_name
         self.database = create_database(instrument_host)
+        self.run_continuous = run_continuous
         self.db_lock = db_lock
         logging.info("Creating connection to {}".format(instrument_host))
 
@@ -94,7 +95,8 @@ class Populator(threading.Thread):
         Periodically runs to populate the database.
         """
         while self.running:
-            logging.info("Performing hourly update for {}".format(self.instrument_name))
+            logging.info("Performing {} update for {}".format("hourly" if self.run_continuous else "single",
+                                                              self.instrument_name))
             try:
                 self.get_from_web_and_populate()
                 logging.info("{} experiment data updated successfully".format(self.instrument_name))
@@ -102,7 +104,10 @@ class Populator(threading.Thread):
                 logging.exception("{} unable to populate database, will try again in {} seconds".format(
                     self.instrument_name, POLLING_TIME))
 
-            for i in range(POLLING_TIME):
-                sleep(1)
-                if not self.running:
-                    return
+            if self.run_continuous:
+                for i in range(POLLING_TIME):
+                    sleep(1)
+                    if not self.running:
+                        return
+            else:
+                break

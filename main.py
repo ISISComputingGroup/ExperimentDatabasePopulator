@@ -7,6 +7,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
 from six.moves import input
+import argparse
 
 
 # PV that contains the instrument list
@@ -59,6 +60,9 @@ class InstrumentPopulatorRunner:
     prev_inst_list = None
     db_lock = threading.RLock()
 
+    def __init__(self, run_continuous=False):
+        self.run_continuous = run_continuous
+
     def start_inst_list_monitor(self):
         logging.info("Setting up monitors on {}".format(INST_LIST_PV))
         self.inst_list_callback(char_value=epics.caget(INST_LIST_PV, as_string=True))
@@ -84,7 +88,7 @@ class InstrumentPopulatorRunner:
         for populator in self.instruments.values():
             populator.running = False
 
-        [populator.join() for populator in self.instruments.values()]
+        self.wait_for_populators_to_finish()
 
         self.instruments.clear()
 
@@ -101,15 +105,26 @@ class InstrumentPopulatorRunner:
             if inst["isScheduled"]:
                 name, host = correct_name(inst["name"]), inst["hostName"]
                 try:
-                    new_populator = Populator(name, host, self.db_lock)
+                    new_populator = Populator(name, host, self.db_lock, self.run_continuous)
                     new_populator.start()
                     self.instruments[name] = new_populator
                 except Exception as e:
                     logging.error("Unable to connect to {}: {}".format(name, e))
 
+    def wait_for_populators_to_finish(self):
+        """
+        Blocks until all populators are finished.
+        """
+        [populator.join() for populator in self.instruments.values()]
+
 
 if __name__ == '__main__':
-    main = InstrumentPopulatorRunner()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cont', action='store_true',
+                        help="Runs the populator continually, updating periodically. Otherwise run once.")
+    args = parser.parse_args()
+
+    main = InstrumentPopulatorRunner(args.cont)
     if DEBUG:
         debug_inst_list = [{"name": "LARMOR", "hostName": "localhost", "isScheduled": True}]
         main.prev_inst_list = debug_inst_list
@@ -117,18 +132,21 @@ if __name__ == '__main__':
     else:
         main.start_inst_list_monitor()
 
-    running = True
-    menu_string = 'Enter U to force update from instrument list or Q to Quit\n '
+    if args.cont:
+        running = True
+        menu_string = 'Enter U to force update from instrument list or Q to Quit\n '
 
-    while running:
-        menu_input = input(menu_string).upper()
-        if menu_input and isinstance(menu_input, str):
-            logging.info("User entered {}".format(menu_input))
-            if menu_input == "Q":
-                main.remove_all_populators()
-                running = False
-            elif menu_input == "U":
-                main.inst_list_changes(main.prev_inst_list)
-            else:
-                logging.warning("Command not recognised: {}".format(menu_input))
+        while running:
+            menu_input = input(menu_string).upper()
+            if menu_input and isinstance(menu_input, str):
+                logging.info("User entered {}".format(menu_input))
+                if menu_input == "Q":
+                    main.remove_all_populators()
+                    running = False
+                elif menu_input == "U":
+                    main.inst_list_changes(main.prev_inst_list)
+                else:
+                    logging.warning("Command not recognised: {}".format(menu_input))
+    else:
+        main.wait_for_populators_to_finish()
 
