@@ -60,6 +60,7 @@ class InstrumentPopulatorRunner:
     db_lock = threading.RLock()
 
     def start_inst_list_monitor(self):
+        logging.info("Setting up monitors on {}".format(INST_LIST_PV))
         self.inst_list_callback(char_value=epics.caget(INST_LIST_PV, as_string=True))
         epics.camonitor(INST_LIST_PV, callback=self.inst_list_callback)
 
