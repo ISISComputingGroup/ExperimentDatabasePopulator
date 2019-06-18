@@ -1,4 +1,4 @@
-from exp_db_populator.webservices_reader import gather_data_and_format
+from exp_db_populator.webservices_reader import gather_data_and_format, gather_all_data_and_format
 from exp_db_populator.database_model import User, Experiment, Experimentteams, database_proxy
 from exp_db_populator.data_types import CREDS_GROUP
 from datetime import datetime, timedelta
@@ -111,3 +111,87 @@ class Populator(threading.Thread):
                         return
             else:
                 break
+
+
+class PopulatorOnly(threading.Thread):
+
+    def __init__(self, instrument_name, instrument_host, db_lock, all_data, run_continuous=False):
+        threading.Thread.__init__(self)
+        self.daemon = True
+        self.instrument_host = instrument_host
+        self.instrument_name = instrument_name
+        self.database = create_database(instrument_host)
+        self.run_continuous = run_continuous
+        self.db_lock = db_lock
+        self.all_data = all_data
+        logging.info("Creating connection to {}".format(instrument_host))
+
+    def populate(self, experiments, experiment_teams):
+        """
+        Populates the database with experiment data.
+
+        Args:
+            experiments (list[dict]): A list of dictionaries containing information on experiments.
+            experiment_teams (list[exp_db_populator.data_types.ExperimentTeamData]): A list containing the users for all new experiments.
+        """
+        if not experiments or not experiment_teams:
+            raise KeyError("Experiment without team or vice versa")
+
+        for batch in chunked(experiments, 100):
+            Experiment.insert_many(batch).on_conflict_replace().execute()
+
+        teams_update = [{Experimentteams.experimentid: exp_team.rb_number,
+                         Experimentteams.roleid: exp_team.role_id,
+                         Experimentteams.startdate: exp_team.start_date,
+                         Experimentteams.userid: exp_team.user.user_id}
+                        for exp_team in experiment_teams]
+
+        for batch in chunked(teams_update, 100):
+            Experimentteams.insert_many(batch).on_conflict_ignore().execute()
+
+    def cleanup_old_data(self):
+        """
+        Removes old data from the database.
+        """
+        remove_old_experiment_teams(AGE_OF_EXPIRATION)
+        remove_experiments_not_referenced()
+        remove_users_not_referenced()
+
+    def get_from_web_and_populate(self):
+        """
+        Gets the data from the web and populates the database.
+        """
+        experiments, experiment_teams = gather_all_data_and_format()
+        with self.db_lock:
+            database_proxy.initialize(self.database)
+            self.populate(experiments, experiment_teams)
+            self.cleanup_old_data()
+            database_proxy.initialize(None)  # Ensure no other populators send to the wrong database
+
+    def filter_and_populate(self):
+        experiments, experiment_teams, rb_instrument = self.all_data
+        experiments = list(filter(lambda x: rb_instrument[x[Experiment.experimentid]] == self.instrument_name, experiments))
+        experiment_teams = list(filter(lambda x: rb_instrument[x.rb_number] == self.instrument_name, experiment_teams))
+        print("Filtered lists to populate:")
+        print(experiments)
+        print(experiment_teams)
+        with self.db_lock:
+            database_proxy.initialize(self.database)
+            self.populate(experiments, experiment_teams)
+            self.cleanup_old_data()
+            database_proxy.initialize(None)  # Ensure no other populators send to the wrong database
+
+    def run(self):
+        """
+        Periodically runs to populate the database.
+        """
+
+        logging.info("Performing {} update for {}".format("hourly" if self.run_continuous else "single",
+                                                          self.instrument_name))
+        try:
+            self.filter_and_populate()
+            logging.info("{} experiment data updated successfully".format(self.instrument_name))
+        except Exception:
+            logging.exception("{} unable to populate database, will try again in {} seconds".format(
+                self.instrument_name, POLLING_TIME))
+

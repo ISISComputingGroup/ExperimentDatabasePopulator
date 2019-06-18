@@ -15,7 +15,7 @@ except ImportError as e:
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
-RELEVANT_DATE_RANGE = 100  # How many days of data to gather (either side of now)
+RELEVANT_DATE_RANGE = 1  # How many days of data to gather (either side of now)
 DATE_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 BUS_APPS_SITE = "https://fitbaweb1.isis.cclrc.ac.uk:8443/"
@@ -90,6 +90,17 @@ def get_data_from_web(instrument, client, session_id):
         raise
 
 
+def get_all_data_from_web(client, session_id):
+    try:
+        date_range = create_date_range(client)
+
+        experiments = client.service.getExperimentsByDate(session_id, "ISIS", date_range)
+        return experiments
+    except Exception:
+        logging.exception('Error gathering data from web services:')
+        raise
+
+
 def create_exp_team(user, role, rb_number, rb_start_dates):
     if rb_number not in rb_start_dates:
         raise KeyError("RB number {} could not be found for {}".format(rb_number, user.name))
@@ -142,7 +153,52 @@ def reformat_data(teams, dates, local_contacts):
         raise
 
 
+def reformat_all_data(data_list):
+    try:
+        rb_start_dates = {}
+        experiments = []
+        exp_teams = []
+        rb_instrument = {}
+
+        for data in data_list:
+            rb_number = data['rbNumber']
+            rb_instrument[rb_number] = data["instrument"]
+
+            experiments.append({Experiment.experimentid: data['rbNumber'],
+                                Experiment.startdate: data['scheduledDate'],
+                                Experiment.duration: math.ceil(data['timeAllocated'])})
+
+            date_for_rb = rb_start_dates.get(rb_number, [])
+            rb_start_dates[rb_number] = date_for_rb + [data['scheduledDate']]
+
+            user_data = UserData(data['lcName'], LOCAL_ORG)
+            exp_teams.extend(create_exp_team(user_data, "Contact", data['rbNumber'], rb_start_dates))
+
+            for user in get_experimenters(data):
+                user_data = UserData(user['name'], user['organisation'])
+                exp_teams.extend(create_exp_team(user_data, user["role"], data['rbNumber'], rb_start_dates))
+
+        return experiments, exp_teams, rb_instrument
+    except Exception:
+        logging.exception('Could not reformat data:')
+        raise
+
+
 def gather_data_and_format(instrument_name):
     client, session_id = connect()
     teams, dates, local_contacts = get_data_from_web(instrument_name, client, session_id)
     return reformat_data(teams, dates, local_contacts)
+
+
+def gather_all_data_and_format(inst_list):
+    client, session_id = connect()
+    data = get_all_data_from_web(client, session_id)
+    print("Data from BusApps:")
+    print(data)
+    return reformat_all_data(data)
+
+
+def gather_old_data():
+    client, session_id = connect()
+    return get_data_from_web("LARMOR", client, session_id)
+
