@@ -7,7 +7,6 @@ import zlib
 import json
 import threading
 import logging
-import pickle
 from logging.handlers import TimedRotatingFileHandler
 import os
 from six.moves import input

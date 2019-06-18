@@ -12,8 +12,8 @@ try:
 except ImportError as e:
     logging.error("Password submodule not found, will not be able to write to databases")
 
-AGE_OF_EXPIRATION = 100 # How old (in days) the startdate of an experiment must be before it is removed from the database
-POLLING_TIME = 3600 # Time in seconds between polling the website
+AGE_OF_EXPIRATION = 100  # How old (in days) the startdate of an experiment must be before it is removed from the database
+POLLING_TIME = 3600  # Time in seconds between polling the website
 
 def remove_users_not_referenced():
     all_team_user_ids = Experimentteams.select(Experimentteams.userid)
@@ -172,9 +172,10 @@ class PopulatorOnly(threading.Thread):
         experiments, experiment_teams, rb_instrument = self.all_data
         experiments = list(filter(lambda x: rb_instrument[x[Experiment.experimentid]] == self.instrument_name, experiments))
         experiment_teams = list(filter(lambda x: rb_instrument[x.rb_number] == self.instrument_name, experiment_teams))
-        print("Filtered lists to populate:")
-        print(experiments)
-        print(experiment_teams)
+        # print("Filtered experiments list:")
+        # print(experiments)
+        # print("Filtered teams list:")
+        # print(experiment_teams)
         with self.db_lock:
             database_proxy.initialize(self.database)
             self.populate(experiments, experiment_teams)

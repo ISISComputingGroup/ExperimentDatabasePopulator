@@ -15,7 +15,7 @@ except ImportError as e:
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
-RELEVANT_DATE_RANGE = 1  # How many days of data to gather (either side of now)
+RELEVANT_DATE_RANGE = 100  # How many days of data to gather (either side of now)
 DATE_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 BUS_APPS_SITE = "https://fitbaweb1.isis.cclrc.ac.uk:8443/"
@@ -193,8 +193,8 @@ def gather_data_and_format(instrument_name):
 def gather_all_data_and_format(inst_list):
     client, session_id = connect()
     data = get_all_data_from_web(client, session_id)
-    print("Data from BusApps:")
-    print(data)
+    # print("Data from BusApps:")
+    # print(data)
     return reformat_all_data(data)
 
 
