@@ -86,7 +86,6 @@ class InstrumentPopulatorRunner:
         Stops all gatherers and clears the cached list.
         """
         # Faster if all threads are stopped first, then joined after.
-        self.wait_for_populators_to_finish()
         for gatherer in self.gatherers:
             gatherer.running = False
 
@@ -101,19 +100,12 @@ class InstrumentPopulatorRunner:
             inst_list (dict): Information about all instruments.
         """
 
-        # Easiest way to make sure gatherer and populators are up to date is stop them all and start them again
+        # Easiest way to make sure gatherer is up to date is restart it
         self.remove_all_gatherers()
 
         gatherer = Gatherer(inst_list, self.db_lock, self.run_continuous)
         gatherer.start()
         self.gatherers.append(gatherer)
-
-    def wait_for_populators_to_finish(self):
-        """
-        Blocks until all populators are finished.
-        """
-        for gatherer in self.gatherers:
-            gatherer.remove_all_populators()
 
     def wait_for_gatherers_to_finish(self):
         """
@@ -153,4 +145,3 @@ if __name__ == '__main__':
                     logging.warning("Command not recognised: {}".format(menu_input))
     else:
         main.wait_for_gatherers_to_finish()
-        main.wait_for_populators_to_finish()
