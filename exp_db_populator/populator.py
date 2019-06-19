@@ -1,4 +1,4 @@
-from exp_db_populator.webservices_reader import gather_data_and_format, gather_all_data_and_format
+from exp_db_populator.webservices_reader import gather_data_and_format
 from exp_db_populator.database_model import User, Experiment, Experimentteams, database_proxy
 from exp_db_populator.data_types import CREDS_GROUP
 from datetime import datetime, timedelta
@@ -14,6 +14,7 @@ except ImportError as e:
 
 AGE_OF_EXPIRATION = 100  # How old (in days) the startdate of an experiment must be before it is removed from the database
 POLLING_TIME = 3600  # Time in seconds between polling the website
+
 
 def remove_users_not_referenced():
     all_team_user_ids = Experimentteams.select(Experimentteams.userid)

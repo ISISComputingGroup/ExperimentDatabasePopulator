@@ -15,7 +15,7 @@ except ImportError as e:
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
-RELEVANT_DATE_RANGE = 10  # How many days of data to gather (either side of now)
+RELEVANT_DATE_RANGE = 1  # How many days of data to gather (either side of now)
 DATE_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 BUS_APPS_SITE = "https://fitbaweb1.isis.cclrc.ac.uk:8443/"
@@ -91,9 +91,18 @@ def get_data_from_web(instrument, client, session_id):
 
 
 def get_all_data_from_web(client, session_id):
+    """
+    Args:
+        client: The client that has connected to the web.
+        session_id: The id of the web session.
+
+    Returns:
+        list: The data from the website
+    """
     try:
         date_range = create_date_range(client)
 
+        logging.info("Gathering updated experiment data from server")
         experiments = client.service.getExperimentsByDate(session_id, "ISIS", date_range)
         return experiments
     except Exception:
@@ -154,6 +163,16 @@ def reformat_data(teams, dates, local_contacts):
 
 
 def reformat_all_data(data_list):
+    """
+    Reformats the data from the way the website returns it to the way the database wants it.
+    Args:
+        data_list (list): List of all data returned by the website.
+
+    Returns:
+        tuple (list, list, dict): A list of the experiments and their associated data, a list of the experiment teams,
+                            and a dictionary of rb_numbers and their associated instrument.
+                            Experiment teams contains information on each experiment and which users are related to it.
+    """
     try:
         rb_start_dates = {}
         experiments = []
@@ -190,7 +209,7 @@ def gather_data_and_format(instrument_name):
     return reformat_data(teams, dates, local_contacts)
 
 
-def gather_all_data_and_format(inst_list):
+def gather_all_data_and_format():
     client, session_id = connect()
     data = get_all_data_from_web(client, session_id)
     return reformat_all_data(data)

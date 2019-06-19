@@ -1,18 +1,10 @@
-from exp_db_populator.populator import Populator, PopulatorOnly
+from exp_db_populator.populator import PopulatorOnly
 from exp_db_populator.webservices_reader import gather_all_data_and_format
-import epics
-import zlib
-import json
 import threading
 import logging
 from time import sleep
-import pickle
-from logging.handlers import TimedRotatingFileHandler
-import os
-from six.moves import input
-import argparse
 
-POLLING_TIME = 60  # Time in seconds between polling the website
+POLLING_TIME = 3600  # Time in seconds between polling the website
 
 
 def correct_name(old_name):
@@ -35,12 +27,15 @@ class Gatherer(threading.Thread):
         self.inst_list = inst_list
         self.run_continuous = run_continuous
         self.db_lock = db_lock
-        logging.info("Starting gatherer thread")
+        logging.info("Starting gatherer")
 
     def run(self):
+        """
+        Periodically runs to gather new data and populate the databases.
+        """
         while self.running:
             inst_list = list(map(lambda x: correct_name(x), self.inst_list))
-            all_data = gather_all_data_and_format(inst_list)
+            all_data = gather_all_data_and_format()
 
             for inst in inst_list:
                 if inst["isScheduled"]:

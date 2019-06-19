@@ -2,7 +2,7 @@ import unittest
 import exp_db_populator.database_model as model
 from peewee import SqliteDatabase
 from exp_db_populator.populator import remove_users_not_referenced, remove_old_experiment_teams, \
-    remove_experiments_not_referenced, Populator, PopulatorOnly
+    remove_experiments_not_referenced, PopulatorOnly
 from tests.webservices_test_data import *
 from mock import Mock, patch
 from exp_db_populator.data_types import UserData, ExperimentTeamData
@@ -25,7 +25,6 @@ class PopulatorTests(unittest.TestCase):
 
         self.lock = threading.Lock()
         self.populator = PopulatorOnly(TEST_INSTRUMENT, "test_connection", self.lock, ([], [], {}))
-        # self.populator = Populator(TEST_INSTRUMENT, "test_connection", self.lock)
 
         self.addCleanup(patch_db.stop)
 
@@ -135,7 +134,7 @@ class PopulatorTests(unittest.TestCase):
         rb_instrument = {TEST_RBNUMBER: TEST_OTHER_INSTRUMENT}
         self.assertEqual(0, len(self.populator.filter_experiment_teams(experiment_teams, rb_instrument)))
 
-    def test_WHEN_populate_called_with_list_of_experiments_and_teams_THEN_experiments__and_teams_database_populated(self):
+    def test_WHEN_populate_called_with_list_of_experiments_and_teams_THEN_experiments_and_teams_database_populated(self):
         experiments = self.create_experiments_dictionary()
         experiment_teams = self.create_experiment_teams_dictionary()
 
@@ -165,7 +164,7 @@ class PopulatorTests(unittest.TestCase):
         self.assertEqual(TEST_TIMEALLOCATED, db_experiments[0].duration)
 
     def test_GIVEN_an_old_experiment_WHEN_remove_old_experiments_called_THEN_experiment_teams_removed(self):
-        self.create_full_record(startdate=datetime(1980,1,1))
+        self.create_full_record(startdate=datetime(1980, 1, 1))
 
         self.assertEqual(1, model.Experimentteams.select().count())
         remove_old_experiment_teams(1)
@@ -181,8 +180,8 @@ class PopulatorTests(unittest.TestCase):
     @patch('exp_db_populator.populator.PopulatorOnly.filter_experiments')
     @patch('exp_db_populator.populator.PopulatorOnly.filter_experiment_teams')
     def test_GIVEN_db_locked_WHEN_populator_running_THEN_does_not_write_to_db(self, experiments_filter, experiment_teams_filter):
-        experiments_filter.side_effect = lambda x, y: "test_instrument"
-        experiment_teams_filter.side_effect = lambda x, y: "test_instrument"
+        experiments_filter.side_effect = lambda x, y: x
+        experiment_teams_filter.side_effect = lambda x, y: x
 
         pop_populate = Mock()
 
@@ -200,28 +199,3 @@ class PopulatorTests(unittest.TestCase):
 
         sleep(0.5)
         pop_populate.assert_called()
-
-    # @patch('exp_db_populator.populator.gather_data_and_format')
-    def test_GIVEN_two_populators_WHEN_one_writing_to_database_THEN_the_other_does_not(self):
-        # gather.side_effect = lambda x: (x, x)
-        second_pop = PopulatorOnly("SECOND_INST", "test_connection", self.lock, ([], [], {}))
-
-        pop_populate = Mock()
-
-        self.populator.cleanup_old_data = lambda: sleep(0.5)
-        self.populator.populate = pop_populate
-
-        second_pop.cleanup_old_data = Mock()
-        second_pop.populate = pop_populate
-
-        thread_one = threading.Thread(target=self.populator.filter_and_populate)
-        thread_two = threading.Thread(target=second_pop.filter_and_populate)
-
-        thread_one.start()
-        thread_two.start()
-
-        pop_populate.assert_called_once_with(self.populator.instrument_name, self.populator.instrument_name)
-
-        thread_one.join()
-        sleep(0.2)
-        pop_populate.assert_called_with("SECOND_INST", "SECOND_INST")

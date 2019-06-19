@@ -10,32 +10,31 @@ class MainTest(unittest.TestCase):
         self.inst_pop_runner = InstrumentPopulatorRunner()
 
     @patch('main.Gatherer')
-    def test_GIVEN_empty_list_of_gatherers_WHEN_instrument_list_has_new_instrument_THEN_new_gatherer(self, gatherer):
+    def test_GIVEN_no_gatherer_running_WHEN_instrument_list_has_new_instrument_THEN_gatherer_starts(self, gatherer):
         new_name, new_host = "TEST", "NDXTEST"
         new_gather = gatherer.return_value
 
         self.inst_pop_runner.inst_list_changes([{"name": new_name, "hostName": new_host, "isScheduled": True}])
 
-        self.assertEqual(1, len(self.inst_pop_runner.gatherers))
-        self.assertEqual(new_gather, self.inst_pop_runner.gatherers[0])
+        self.assertEqual(new_gather, self.inst_pop_runner.gatherer)
 
-    @patch('main.InstrumentPopulatorRunner.remove_all_gatherers')
+    @patch('main.InstrumentPopulatorRunner.remove_gatherer')
     def test_WHEN_instrument_list_updated_THEN_gatherer_stopped_and_cleared(self, stop):
         new_name, new_host = "TEST", "NDXTEST"
         self.inst_pop_runner.inst_list_changes([{"name": new_name, "hostName": new_host, "isScheduled": True}])
 
         stop.assert_called()
 
-    def test_GIVEN_existing_gatherer_WHEN_remove_all_called_THEN_gatherer_stopped_and_cleared(self):
+    def test_GIVEN_existing_gatherer_WHEN_remove_gatherer_called_THEN_gatherer_stopped_and_cleared(self):
         old_gatherer = Mock(Gatherer)
         old_gatherer.running = True
-        self.inst_pop_runner.gatherers.append(old_gatherer)
+        self.inst_pop_runner.gatherer = old_gatherer
 
-        self.inst_pop_runner.remove_all_gatherers()
+        self.inst_pop_runner.remove_gatherer()
 
         old_gatherer.join.assert_called()
         self.assertEqual(False, old_gatherer.running)
-        self.assertEqual(0, len(self.inst_pop_runner.gatherers))
+        self.assertEqual(None, self.inst_pop_runner.gatherer)
 
     # @patch('main.Populator')
     # def test_GIVEN_empty_list_of_populators_WHEN_instrument_list_has_new_instrument_THEN_added_to_populators(self, populator):

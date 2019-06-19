@@ -57,7 +57,7 @@ class InstrumentPopulatorRunner:
     """
     Responsible for managing the thread that will gather the data and populate each instrument.
     """
-    gatherers = []
+    gatherer = None
     prev_inst_list = None
     db_lock = threading.RLock()
 
@@ -81,17 +81,15 @@ class InstrumentPopulatorRunner:
             self.prev_inst_list = new_inst_list
             self.inst_list_changes(new_inst_list)
 
-    def remove_all_gatherers(self):
+    def remove_gatherer(self):
         """
-        Stops all gatherers and clears the cached list.
+        Stops the gatherer and clears the cache.
         """
-        # Faster if all threads are stopped first, then joined after.
-        for gatherer in self.gatherers:
-            gatherer.running = False
-
-        self.wait_for_gatherers_to_finish()
-
-        self.gatherers.clear()
+        # Faster if thread is stopped first, then joined after.
+        if self.gatherer is not None:
+            self.gatherer.running = False
+            self.wait_for_gatherer_to_finish()
+            self.gatherer = None
 
     def inst_list_changes(self, inst_list):
         """
@@ -100,18 +98,18 @@ class InstrumentPopulatorRunner:
             inst_list (dict): Information about all instruments.
         """
 
-        # Easiest way to make sure gatherer is up to date is restart it
-        self.remove_all_gatherers()
+        # Easiest way to make sure gatherer is up to date is to restart it
+        self.remove_gatherer()
 
-        gatherer = Gatherer(inst_list, self.db_lock, self.run_continuous)
-        gatherer.start()
-        self.gatherers.append(gatherer)
+        new_gatherer = Gatherer(inst_list, self.db_lock, self.run_continuous)
+        new_gatherer.start()
+        self.gatherer = new_gatherer
 
-    def wait_for_gatherers_to_finish(self):
+    def wait_for_gatherer_to_finish(self):
         """
-        Blocks until all gatherers are finished.
+        Blocks until gatherer is finished.
         """
-        [gatherer.join() for gatherer in self.gatherers]
+        self.gatherer.join()
 
 
 if __name__ == '__main__':
@@ -137,11 +135,11 @@ if __name__ == '__main__':
             if menu_input and isinstance(menu_input, str):
                 logging.info("User entered {}".format(menu_input))
                 if menu_input == "Q":
-                    main.remove_all_gatherers()
+                    main.remove_gatherer()
                     running = False
                 elif menu_input == "U":
                     main.inst_list_changes(main.prev_inst_list)
                 else:
                     logging.warning("Command not recognised: {}".format(menu_input))
     else:
-        main.wait_for_gatherers_to_finish()
+        main.wait_for_gatherer_to_finish()
