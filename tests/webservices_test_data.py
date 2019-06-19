@@ -1,6 +1,7 @@
 from datetime import datetime
 from mock import MagicMock, PropertyMock
 TEST_INSTRUMENT = 'test_instrument'
+TEST_OTHER_INSTRUMENT = "test_other_instrument"
 TEST_RBNUMBER = '10000'
 TEST_TIMEALLOCATED = 7
 TEST_DATE = datetime(2018, 1, 1)

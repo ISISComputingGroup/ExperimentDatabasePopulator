@@ -1,6 +1,5 @@
 from exp_db_populator.populator import Populator, PopulatorOnly
 from exp_db_populator.webservices_reader import gather_all_data_and_format
-from exp_db_populator.webservices_reader import gather_old_data
 import epics
 import zlib
 import json

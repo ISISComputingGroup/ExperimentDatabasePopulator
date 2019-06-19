@@ -1,7 +1,5 @@
-from exp_db_populator.populator import Populator, PopulatorOnly
-from exp_db_populator.webservices_reader import gather_all_data_and_format
+
 from exp_db_populator.gatherer import Gatherer
-from exp_db_populator.webservices_reader import gather_old_data
 import epics
 import zlib
 import json
@@ -57,10 +55,9 @@ def correct_name(old_name):
 
 class InstrumentPopulatorRunner:
     """
-    Responsible for managing the threads that will populate each instrument.
+    Responsible for managing the thread that will gather the data and populate each instrument.
     """
     gatherers = []
-    instruments = {}
     prev_inst_list = None
     db_lock = threading.RLock()
 
@@ -84,23 +81,12 @@ class InstrumentPopulatorRunner:
             self.prev_inst_list = new_inst_list
             self.inst_list_changes(new_inst_list)
 
-    def remove_all_populators(self):
-        """
-        Stops all populators and clears the cached list.
-        """
-        # Faster if all threads are stopped first, then joined after.
-        for populator in self.instruments.values():
-            populator.running = False
-
-        self.wait_for_populators_to_finish()
-
-        self.instruments.clear()
-
     def remove_all_gatherers(self):
         """
         Stops all gatherers and clears the cached list.
         """
         # Faster if all threads are stopped first, then joined after.
+        self.wait_for_populators_to_finish()
         for gatherer in self.gatherers:
             gatherer.running = False
 
@@ -108,56 +94,33 @@ class InstrumentPopulatorRunner:
 
         self.gatherers.clear()
 
-
     def inst_list_changes(self, inst_list):
         """
-        Starts a new populator thread for each instrument.
+        Starts a new gatherer thread.
         Args:
             inst_list (dict): Information about all instruments.
         """
-        # inst_list = list(map(lambda x: correct_name(x), inst_list))
-        # all_data = gather_all_data_and_format(inst_list)
-        # print(all_data)
 
-        # Easiest way to make sure all populators are up to date is stop them all and start them again
-        self.remove_all_populators()
+        # Easiest way to make sure gatherer and populators are up to date is stop them all and start them again
+        self.remove_all_gatherers()
 
         gatherer = Gatherer(inst_list, self.db_lock, self.run_continuous)
         gatherer.start()
         self.gatherers.append(gatherer)
 
-        # for inst in inst_list:
-        #     if inst["isScheduled"]:
-        #         name, host = correct_name(inst["name"]), inst["hostName"]
-        #         try:
-        #             new_populator = PopulatorOnly(name, host, self.db_lock, all_data, self.run_continuous)
-        #             new_populator.start()
-        #             self.instruments[name] = new_populator
-        #         except Exception as e:
-        #             logging.error("Unable to connect to {}: {}".format(name, e))
-
-
-        # for inst in inst_list:
-        #     if inst["isScheduled"]:
-        #         name, host = correct_name(inst["name"]), inst["hostName"]
-        #         try:
-        #             new_populator = Populator(name, host, self.db_lock, self.run_continuous)
-        #             new_populator.start()
-        #             self.instruments[name] = new_populator
-        #         except Exception as e:
-        #             logging.error("Unable to connect to {}: {}".format(name, e))
-
     def wait_for_populators_to_finish(self):
         """
         Blocks until all populators are finished.
         """
-        [populator.join() for populator in self.instruments.values()]
+        for gatherer in self.gatherers:
+            gatherer.remove_all_populators()
 
     def wait_for_gatherers_to_finish(self):
         """
         Blocks until all gatherers are finished.
         """
         [gatherer.join() for gatherer in self.gatherers]
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -182,7 +145,6 @@ if __name__ == '__main__':
             if menu_input and isinstance(menu_input, str):
                 logging.info("User entered {}".format(menu_input))
                 if menu_input == "Q":
-                    main.remove_all_populators()
                     main.remove_all_gatherers()
                     running = False
                 elif menu_input == "U":
@@ -190,6 +152,5 @@ if __name__ == '__main__':
                 else:
                     logging.warning("Command not recognised: {}".format(menu_input))
     else:
-        main.wait_for_populators_to_finish()
         main.wait_for_gatherers_to_finish()
-
+        main.wait_for_populators_to_finish()

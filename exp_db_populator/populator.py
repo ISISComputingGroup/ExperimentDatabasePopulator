@@ -86,6 +86,7 @@ class Populator(threading.Thread):
         experiments, experiment_teams = gather_data_and_format(self.instrument_name)
         with self.db_lock:
             database_proxy.initialize(self.database)
+            print(experiments, experiment_teams)
             self.populate(experiments, experiment_teams)
             self.cleanup_old_data()
             database_proxy.initialize(None)  # Ensure no other populators send to the wrong database
@@ -157,34 +158,43 @@ class PopulatorOnly(threading.Thread):
         remove_experiments_not_referenced()
         remove_users_not_referenced()
 
-    def get_from_web_and_populate(self):
+    def filter_and_populate(self):
         """
-        Gets the data from the web and populates the database.
+        Populates the database with just this experiment's data.
         """
-        experiments, experiment_teams = gather_all_data_and_format()
+        experiments, experiment_teams, rb_instrument = self.all_data
+        experiments = self.filter_experiments(experiments, rb_instrument)
+        experiment_teams = self.filter_experiment_teams(experiment_teams, rb_instrument)
         with self.db_lock:
             database_proxy.initialize(self.database)
+            print(experiments, experiment_teams)
             self.populate(experiments, experiment_teams)
             self.cleanup_old_data()
             database_proxy.initialize(None)  # Ensure no other populators send to the wrong database
 
-    def filter_and_populate(self):
-        experiments, experiment_teams, rb_instrument = self.all_data
-        experiments = list(filter(lambda x: rb_instrument[x[Experiment.experimentid]] == self.instrument_name, experiments))
-        experiment_teams = list(filter(lambda x: rb_instrument[x.rb_number] == self.instrument_name, experiment_teams))
-        # print("Filtered experiments list:")
-        # print(experiments)
-        # print("Filtered teams list:")
-        # print(experiment_teams)
-        with self.db_lock:
-            database_proxy.initialize(self.database)
-            self.populate(experiments, experiment_teams)
-            self.cleanup_old_data()
-            database_proxy.initialize(None)  # Ensure no other populators send to the wrong database
+    def filter_experiments(self, experiments, rb_instrument):
+        """
+        Returns all of this instrument's experiments data.
+
+        Args:
+            experiments (list[dict]): A list of dictionaries containing information on experiments.
+            rb_instrument (dict): A dictionary which connects rb numbers with their associated experiment
+        """
+        return list(filter(lambda x: rb_instrument[x[Experiment.experimentid]] == self.instrument_name, experiments))
+
+    def filter_experiment_teams(self, experiment_teams, rb_instrument):
+        """
+        Returns all of this instrument's experiment teams data.
+
+        Args:
+            experiment_teams (list[exp_db_populator.data_types.ExperimentTeamData]): A list containing the users for all new experiments.
+            rb_instrument (dict): A dictionary which connects rb numbers with their associated experiment
+        """
+        return list(filter(lambda x: rb_instrument[x.rb_number] == self.instrument_name, experiment_teams))
 
     def run(self):
         """
-        Periodically runs to populate the database.
+        Runs when the thread starts, and populates the database.
         """
 
         logging.info("Performing {} update for {}".format("hourly" if self.run_continuous else "single",
