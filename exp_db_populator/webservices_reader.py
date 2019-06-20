@@ -15,7 +15,7 @@ except ImportError as e:
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
-RELEVANT_DATE_RANGE = 1  # How many days of data to gather (either side of now)
+RELEVANT_DATE_RANGE = 100  # How many days of data to gather (either side of now)
 DATE_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
 BUS_APPS_SITE = "https://fitbaweb1.isis.cclrc.ac.uk:8443/"
@@ -68,28 +68,6 @@ def connect():
         raise
 
 
-def get_data_from_web(instrument, client, session_id):
-    """
-    Args:
-        instrument: The name of the instrument to get the data for.
-        client: The client that has connected to the web.
-        session_id: The id of the web session.
-
-    Returns:
-        tuple: The teams, dates and local_contacts data
-    """
-    try:
-        date_range = create_date_range(client)
-
-        teams = client.service.getExperimentTeamsForInstrument(session_id, instrument, date_range)
-        dates = client.service.getExperimentDatesForInstrument(session_id, instrument, date_range)
-        local_contacts = client.service.getExperimentLocalContactsForInstrument(session_id, instrument, date_range)
-        return teams, dates, local_contacts
-    except Exception:
-        logging.exception('Error gathering data from web services:')
-        raise
-
-
 def get_all_data_from_web(client, session_id):
     """
     Args:
@@ -110,15 +88,13 @@ def get_all_data_from_web(client, session_id):
         raise
 
 
-def create_exp_team(user, role, rb_number, rb_start_dates):
-    if rb_number not in rb_start_dates:
-        raise KeyError("RB number {} could not be found for {}".format(rb_number, user.name))
+def create_exp_team(user, role, rb_number, date):
 
     # IBEX calls them users, BusApps calls them members
     if role == "Member":
         role = "User"
 
-    return [ExperimentTeamData(user, role, rb_number, date) for date in rb_start_dates[rb_number]]
+    return ExperimentTeamData(user, role, rb_number, date)
 
 
 def reformat_data(data_list):
@@ -128,48 +104,33 @@ def reformat_data(data_list):
         data_list (list): List of all data returned by the website.
 
     Returns:
-        tuple (list, list, dict): A list of the experiments and their associated data, a list of the experiment teams,
-                            and a dictionary of rb_numbers and their associated instrument.
-                            Experiment teams contains information on each experiment and which users are related to it.
+        tuple (list, list): A list of the experiments and their associated data and a list of the experiment teams,
+                            and a dictionary of rb_numbers and their associated instrument..
     """
     try:
-        rb_start_dates = {}
         experiments = []
         exp_teams = []
-        rb_instrument = {}
 
         for data in data_list:
-            rb_number = data['rbNumber']
-            rb_instrument[rb_number] = data["instrument"]
 
             experiments.append({Experiment.experimentid: data['rbNumber'],
                                 Experiment.startdate: data['scheduledDate'],
                                 Experiment.duration: math.ceil(data['timeAllocated'])})
 
-            date_for_rb = rb_start_dates.get(rb_number, [])
-            rb_start_dates[rb_number] = date_for_rb + [data['scheduledDate']]
-
             user_data = UserData(data['lcName'], LOCAL_ORG)
-            exp_teams.extend(create_exp_team(user_data, "Contact", data['rbNumber'], rb_start_dates))
+            exp_teams.append(create_exp_team(user_data, "Contact", data['rbNumber'], data['scheduledDate']))
 
             for user in get_experimenters(data):
                 user_data = UserData(user['name'], user['organisation'])
-                exp_teams.extend(create_exp_team(user_data, user["role"], data['rbNumber'], rb_start_dates))
+                exp_teams.append(create_exp_team(user_data, user["role"], data['rbNumber'], data['scheduledDate']))
 
-        return experiments, exp_teams, rb_instrument
+        return experiments, exp_teams
     except Exception:
         logging.exception('Could not reformat data:')
         raise
 
 
-def gather_data_and_format(instrument_name):
-    client, session_id = connect()
-    teams, dates, local_contacts = get_data_from_web(instrument_name, client, session_id)
-    return reformat_data(teams, dates, local_contacts)
-
-
-def gather_all_data_and_format():
+def gather_data():
     client, session_id = connect()
     data = get_all_data_from_web(client, session_id)
-    return reformat_data(data)
-
+    return data

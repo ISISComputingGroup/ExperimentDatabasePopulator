@@ -1,5 +1,5 @@
-from exp_db_populator.populator import PopulatorOnly
-from exp_db_populator.webservices_reader import gather_all_data_and_format
+from exp_db_populator.populator import update
+from exp_db_populator.webservices_reader import gather_data, reformat_data
 import threading
 import logging
 from time import sleep
@@ -18,6 +18,18 @@ def correct_name(old_name):
     return "ENGIN-X" if old_name == "ENGINX" else old_name
 
 
+def filter_instrument_data(data, inst_name):
+    """
+    Gets the data associated with the specified instrument.
+    Args:
+        data: The data from the website
+        inst_name: The name of the instrument whose data you want to get
+    Returns:
+        list: The data associated with the specified instrument
+    """
+    return list(filter(lambda x: x['instrument'] == inst_name, data))
+
+
 class Gatherer(threading.Thread):
     running = True
 
@@ -34,14 +46,14 @@ class Gatherer(threading.Thread):
         Periodically runs to gather new data and populate the databases.
         """
         while self.running:
-            all_data = gather_all_data_and_format()
+            all_data = gather_data()
 
             for inst in self.inst_list:
                 if inst["isScheduled"]:
                     name, host = correct_name(inst["name"]), inst["hostName"]
+                    data_to_populate = reformat_data(filter_instrument_data(all_data, name))
                     try:
-                        new_populator = PopulatorOnly(name, host, self.db_lock, all_data, self.run_continuous)
-                        new_populator.filter_and_populate()
+                        update(name, host, self.db_lock, data_to_populate, self.run_continuous)
                     except Exception as e:
                         logging.error("Unable to connect to {}: {}".format(name, e))
 

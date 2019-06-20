@@ -2,7 +2,7 @@ import unittest
 import exp_db_populator.database_model as model
 from peewee import SqliteDatabase
 from exp_db_populator.populator import remove_users_not_referenced, remove_old_experiment_teams, \
-    remove_experiments_not_referenced, PopulatorOnly
+    remove_experiments_not_referenced, populate, update
 from tests.webservices_test_data import *
 from mock import Mock, patch
 from exp_db_populator.data_types import UserData, ExperimentTeamData
@@ -24,7 +24,6 @@ class PopulatorTests(unittest.TestCase):
         patch_db.start()
 
         self.lock = threading.Lock()
-        self.populator = PopulatorOnly(TEST_INSTRUMENT, "test_connection", self.lock, ([], [], {}))
 
         self.addCleanup(patch_db.stop)
 
@@ -87,7 +86,7 @@ class PopulatorTests(unittest.TestCase):
         self.assertEqual(1, model.Experiment.select().count())
 
     def test_WHEN_populate_called_with_experiments_and_no_teams_THEN_exception_raised(self):
-        self.assertRaises(KeyError, self.populator.populate, ["TEST"], [])
+        self.assertRaises(KeyError, populate, ["TEST"], [])
 
     def create_experiments_dictionary(self):
         return [{model.Experiment.experimentid: TEST_RBNUMBER,
@@ -108,31 +107,11 @@ class PopulatorTests(unittest.TestCase):
 
     def test_WHEN_populate_called_with_experiments_and_no_teams_THEN_exception_raised(self):
         experiments = self.create_experiments_dictionary()
-        self.assertRaises(KeyError, self.populator.populate, experiments, [])
+        self.assertRaises(KeyError, populate, experiments, [])
 
     def test_WHEN_populate_called_with_teams_and_no_experiments_THEN_exception_raised(self):
         experiment_teams = self.create_experiment_teams_dictionary()
-        self.assertRaises(KeyError, self.populator.populate, [], experiment_teams)
-
-    def test_WHEN_filter_experiments_called_with_experiment_belonging_to_instrument_THEN_experiment_accepted(self):
-        experiments = self.create_experiments_dictionary()
-        rb_instrument = self.create_rb_instrument_dictionary()
-        self.assertEqual(1, len(self.populator.filter_experiments(experiments, rb_instrument)))
-
-    def test_WHEN_filter_experiments_called_with_experiment_not_belonging_to_instrument_THEN_experiment_rejected(self):
-        experiments = self.create_experiments_dictionary()
-        rb_instrument = {TEST_RBNUMBER: TEST_OTHER_INSTRUMENT}
-        self.assertEqual(0, len(self.populator.filter_experiments(experiments, rb_instrument)))
-
-    def test_WHEN_filter_experiment_teams_called_with_team_belonging_to_instrument_THEN_team_accepted(self):
-        experiment_teams = self.create_experiment_teams_dictionary()
-        rb_instrument = self.create_rb_instrument_dictionary()
-        self.assertEqual(1, len(self.populator.filter_experiment_teams(experiment_teams, rb_instrument)))
-
-    def test_WHEN_filter_experiment_teams_called_with_team_not_belonging_to_instrument_THEN_team_rejected(self):
-        experiment_teams = self.create_experiment_teams_dictionary()
-        rb_instrument = {TEST_RBNUMBER: TEST_OTHER_INSTRUMENT}
-        self.assertEqual(0, len(self.populator.filter_experiment_teams(experiment_teams, rb_instrument)))
+        self.assertRaises(KeyError, populate, [], experiment_teams)
 
     def test_WHEN_populate_called_with_list_of_experiments_and_teams_THEN_experiments_and_teams_database_populated(self):
         experiments = self.create_experiments_dictionary()
@@ -144,7 +123,7 @@ class PopulatorTests(unittest.TestCase):
         self.assertEqual(0, db_experiments.count())
         self.assertEqual(0, db_experiment_teams.count())
 
-        self.populator.populate(experiments, experiment_teams)
+        populate(experiments, experiment_teams)
 
         self.assertEqual(1, db_experiments.count())
         self.assertEqual(1, db_experiment_teams.count())
@@ -157,7 +136,7 @@ class PopulatorTests(unittest.TestCase):
 
         self.assertNotEqual(TEST_TIMEALLOCATED, model.Experiment.select()[0].duration)
 
-        self.populator.populate(experiments, experiment_teams)
+        populate(experiments, experiment_teams)
 
         db_experiments = model.Experiment.select()
         self.assertEqual(1, db_experiments.count())
@@ -177,25 +156,18 @@ class PopulatorTests(unittest.TestCase):
         remove_old_experiment_teams(1)
         self.assertEqual(1, model.Experimentteams.select().count())
 
-    @patch('exp_db_populator.populator.PopulatorOnly.filter_experiment_teams')
-    @patch('exp_db_populator.populator.PopulatorOnly.filter_experiments')
-    def test_GIVEN_db_locked_WHEN_populator_running_THEN_does_not_write_to_db(self, experiments_filter, experiment_teams_filter):
-        experiments_filter.side_effect = lambda x, y: x
-        experiment_teams_filter.side_effect = lambda x, y: x
+    @patch('exp_db_populator.populator.populate')
+    @patch('exp_db_populator.populator.cleanup_old_data')
+    def test_GIVEN_db_locked_WHEN_populate_runs_THEN_does_not_write_to_db(self, clean, pop):
+        clean.side_effect = lambda: sleep(1)
+        pop.side_effect = lambda x, y: sleep(0.5)
 
-        pop_populate = Mock()
-
-        self.populator.cleanup_old_data = lambda: sleep(1)
-        self.populator.populate = pop_populate
-
-        thread_one = threading.Thread(target=self.populator.filter_and_populate)
+        thread_one = threading.Thread(target=update, args=("", "", self.lock, ([], [])))
 
         with self.lock:
             thread_one.start()
             sleep(0.5)
-            experiments_filter.assert_called()
-            experiment_teams_filter.assert_called()
-            pop_populate.assert_not_called()
+            pop.assert_not_called()
 
         sleep(0.5)
-        pop_populate.assert_called()
+        pop.assert_called()
