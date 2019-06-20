@@ -27,13 +27,14 @@ class WebServicesReaderTests(unittest.TestCase):
         self.assertEqual([], get_experimenters(team))
 
     def test_GIVEN_no_data_set_WHEN_data_formatted_THEN_no_data_set(self):
-        experiments, experiment_teams = reformat_data([], [], [])
+        experiments, experiment_teams, rb_instrument = reformat_data([])
 
         self.assertEqual(experiments, [])
         self.assertEqual(experiment_teams, [])
+        self.assertEqual(rb_instrument, {})
 
-    def test_GIVEN_dates_WHEN_data_formatted_THEN_experiment_list_populated(self):
-        experiments, experiment_teams = reformat_data([], TEST_DATES, [])
+    def test_GIVEN_data_WHEN_data_formatted_THEN_experiment_list_populated(self):
+        experiments, experiment_teams, rb_instrument = reformat_data(TEST_DATA)
 
         self.assertEqual(len(experiments), 1)
         exp_entry = experiments[0]
@@ -42,8 +43,8 @@ class WebServicesReaderTests(unittest.TestCase):
         self.assertEqual(exp_entry[Experiment.duration], TEST_TIMEALLOCATED)
 
     def test_GIVEN_rb_with_multiple_start_dates_WHEN_data_formatted_THEN_two_experiments_added(self):
-        dates = TEST_DATES + [create_date_data(TEST_RBNUMBER, datetime.now(), 3)]
-        experiments, experiment_teams = reformat_data([], dates, [])
+        data = TEST_DATA + [create_data(TEST_RBNUMBER, datetime.now(), 3)]
+        experiments, experiment_teams, rb_instrument = reformat_data(data)
 
         self.assertEqual(len(experiments), 2)
         first_exp, second_exp = experiments[0], experiments[1]
@@ -51,10 +52,10 @@ class WebServicesReaderTests(unittest.TestCase):
         self.assertEqual(first_exp[Experiment.experimentid], TEST_RBNUMBER)
         self.assertNotEqual(first_exp[Experiment.startdate], second_exp[Experiment.startdate])
 
-    def test_GIVEN_multiple_dates_WHEN_data_formatted_THEN_experiment_list_contains_both(self):
+    def test_GIVEN_data_with_different_dates_WHEN_data_formatted_THEN_experiment_list_contains_both(self):
         rb, date, duration = 2000, datetime(1992, 2, 7), 10
-        dates = TEST_DATES + [create_date_data(rb, date, duration)]
-        experiments, experiment_teams = reformat_data([], dates, [])
+        data = TEST_DATA + [create_data(rb, date, duration)]
+        experiments, experiment_teams, rb_instrument = reformat_data(data)
 
         self.assertEqual(len(experiments), 2)
         for entry in experiments:
@@ -66,11 +67,11 @@ class WebServicesReaderTests(unittest.TestCase):
                 self.assertEqual(entry[Experiment.startdate], date)
                 self.assertEqual(entry[Experiment.duration], duration)
 
-    def test_GIVEN_local_contacts_and_no_corresponding_date_WHEN_data_formatted_THEN_exception_thrown(self):
-        self.assertRaises(KeyError, reformat_data, [], [], TEST_CONTACTS)
+    def test_GIVEN_data_with_local_contacts_and_no_corresponding_date_WHEN_data_formatted_THEN_exception_thrown(self):
+        self.assertRaises(KeyError, reformat_data, TEST_CONTACTS)
 
-    def test_GIVEN_local_contacts_and_corresponding_date_WHEN_data_formatted_THEN_experiment_teams_populated(self):
-        experiments, experiment_teams = reformat_data([], TEST_DATES, TEST_CONTACTS)
+    def test_GIVEN_data_with_local_contacts_and_corresponding_date_WHEN_data_formatted_THEN_experiment_teams_populated(self):
+        experiments, experiment_teams, rb_instrument = reformat_data(TEST_DATA)
 
         expected_user = UserData(TEST_CONTACT_NAME, LOCAL_ORG)
         expected_user_data = ExperimentTeamData(expected_user, LOCAL_ROLE, TEST_RBNUMBER, TEST_DATE)
@@ -80,9 +81,9 @@ class WebServicesReaderTests(unittest.TestCase):
 
     def test_GIVEN_user_and_no_corresponding_date_WHEN_data_formatted_THEN_exception_thrown(self):
         team = get_test_experiment_team([TEST_USER_1])
-        self.assertRaises(KeyError, reformat_data, [team], [], [])
+        self.assertRaises(KeyError, reformat_data, [team])
 
-    def test_GIVEN_user_and_corresponding_date_WHEN_data_formatted_THEN_experiment_teams_populated(self):
+    def test_GIVEN_user_and_corresponding_date_WHEN_data_formatted_THEN_experiment_teams_populated(self):  #
         team = get_test_experiment_team([TEST_USER_1])
         experiments, experiment_teams = reformat_data([team], TEST_DATES, [])
 

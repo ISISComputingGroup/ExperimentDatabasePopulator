@@ -36,3 +36,10 @@ def get_test_experiment_team(experimenters):
     team.experimenters = experimenters
     team.__getitem__.side_effect = team_dict.__getitem__
     return team
+
+
+def create_data(rb, start, duration):
+    return {'instrument': TEST_INSTRUMENT, 'lcName': TEST_CONTACT_NAME, 'part': 6, 'rbNumber': rb, 'scheduledDate': start, 'timeAllocated': duration}
+
+
+TEST_DATA = [create_data(TEST_RBNUMBER, TEST_DATE, TEST_TIMEALLOCATED)]

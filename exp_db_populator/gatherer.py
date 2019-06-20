@@ -34,10 +34,9 @@ class Gatherer(threading.Thread):
         Periodically runs to gather new data and populate the databases.
         """
         while self.running:
-            inst_list = list(map(lambda x: correct_name(x), self.inst_list))
             all_data = gather_all_data_and_format()
 
-            for inst in inst_list:
+            for inst in self.inst_list:
                 if inst["isScheduled"]:
                     name, host = correct_name(inst["name"]), inst["hostName"]
                     try:

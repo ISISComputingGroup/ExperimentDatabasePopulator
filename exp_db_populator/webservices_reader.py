@@ -121,48 +121,7 @@ def create_exp_team(user, role, rb_number, rb_start_dates):
     return [ExperimentTeamData(user, role, rb_number, date) for date in rb_start_dates[rb_number]]
 
 
-def reformat_data(teams, dates, local_contacts):
-    """
-    Reformats the data from the way the website returns it to the way the database wants it.
-    Args:
-        teams (list): List of teams related to an experiment .
-        dates (list): List of all of the experiments and their dates.
-        local_contacts (list): List of local contacts for all experiments.
-
-    Returns:
-        tuple (list, list): A list of the experiments and their associated data and a list of the experiment teams.
-                            Experiment teams contains information on each experiment and which users are related to it.
-    """
-    try:
-        rb_start_dates = {}
-        experiments = []
-        exp_teams = []
-
-        for date in dates:
-            experiments.append({Experiment.experimentid: date['rbNumber'],
-                                Experiment.startdate: date['scheduledDate'],
-                                Experiment.duration: math.ceil(date['timeAllocated'])})
-
-            rb_number = date['rbNumber']
-            date_for_rb = rb_start_dates.get(rb_number, [])
-            rb_start_dates[rb_number] = date_for_rb + [date['scheduledDate']]
-
-        for user in local_contacts:
-            user_data = UserData(user['name'], LOCAL_ORG)
-            exp_teams.extend(create_exp_team(user_data, "Contact", user['rbNumber'], rb_start_dates))
-
-        for team in teams:
-            for user in get_experimenters(team):
-                user_data = UserData(user['name'], user['organisation'])
-                exp_teams.extend(create_exp_team(user_data, user["role"], team['rbNumber'], rb_start_dates))
-
-        return experiments, exp_teams
-    except Exception:
-        logging.exception('Could not reformat data:')
-        raise
-
-
-def reformat_all_data(data_list):
+def reformat_data(data_list):
     """
     Reformats the data from the way the website returns it to the way the database wants it.
     Args:
@@ -212,5 +171,5 @@ def gather_data_and_format(instrument_name):
 def gather_all_data_and_format():
     client, session_id = connect()
     data = get_all_data_from_web(client, session_id)
-    return reformat_all_data(data)
+    return reformat_data(data)
 

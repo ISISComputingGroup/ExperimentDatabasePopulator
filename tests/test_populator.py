@@ -177,8 +177,8 @@ class PopulatorTests(unittest.TestCase):
         remove_old_experiment_teams(1)
         self.assertEqual(1, model.Experimentteams.select().count())
 
-    @patch('exp_db_populator.populator.PopulatorOnly.filter_experiments')
     @patch('exp_db_populator.populator.PopulatorOnly.filter_experiment_teams')
+    @patch('exp_db_populator.populator.PopulatorOnly.filter_experiments')
     def test_GIVEN_db_locked_WHEN_populator_running_THEN_does_not_write_to_db(self, experiments_filter, experiment_teams_filter):
         experiments_filter.side_effect = lambda x, y: x
         experiment_teams_filter.side_effect = lambda x, y: x
