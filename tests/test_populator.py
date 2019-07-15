@@ -159,8 +159,8 @@ class PopulatorTests(unittest.TestCase):
     @patch('exp_db_populator.populator.populate')
     @patch('exp_db_populator.populator.cleanup_old_data')
     def test_GIVEN_db_locked_WHEN_populate_runs_THEN_does_not_write_to_db(self, clean, pop):
-        clean.side_effect = lambda: sleep(1)
-        pop.side_effect = lambda x, y: sleep(0.5)
+        clean.side_effect = lambda: 0
+        pop.side_effect = lambda x, y: 0
 
         thread_one = threading.Thread(target=update, args=("", "", self.lock, ([], [])))
 
@@ -169,5 +169,5 @@ class PopulatorTests(unittest.TestCase):
             sleep(0.5)
             pop.assert_not_called()
 
-        sleep(0.5)
+        thread_one.join()
         pop.assert_called()

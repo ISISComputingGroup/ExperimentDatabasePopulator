@@ -18,19 +18,23 @@ def correct_name(old_name):
     return "ENGIN-X" if old_name == "ENGINX" else old_name
 
 
-def filter_instrument_data(data, inst_name):
+def filter_instrument_data(raw_data, inst_name):
     """
     Gets the data associated with the specified instrument.
     Args:
-        data: The data from the website
+        raw_data: All of the raw data from the website
         inst_name: The name of the instrument whose data you want to get
     Returns:
         list: The data associated with the specified instrument
     """
-    return list(filter(lambda x: x['instrument'] == inst_name, data))
+    return [x for x in raw_data if x['instrument'] == inst_name]
 
 
 class Gatherer(threading.Thread):
+    """
+    An instance of this class runs on a thread in the background.
+    Every hour, it gathers data from the website and sends it to all of the instruments.
+    """
     running = True
 
     def __init__(self, inst_list, db_lock, run_continuous=False):

@@ -42,17 +42,6 @@ def convert_inst_list(value_from_PV):
     return json.loads(json_string)
 
 
-def correct_name(old_name):
-    """
-    Some names are different between IBEX and the web data, this function converts these.
-    Args:
-        old_name: The IBEX name
-    Returns:
-        str: The web name
-    """
-    return "ENGIN-X" if old_name == "ENGINX" else old_name
-
-
 class InstrumentPopulatorRunner:
     """
     Responsible for managing the thread that will gather the data and populate each instrument.

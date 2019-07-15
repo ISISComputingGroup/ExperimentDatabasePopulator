@@ -19,8 +19,7 @@ class GathererTests(unittest.TestCase):
 
         new_gatherer = Gatherer(inst_list, self.lock, False)
         new_gatherer.start()
-        sleep(0.5)
-        gather_data.assert_called()
+        new_gatherer.join()
 
         update.assert_called()
 
@@ -33,8 +32,7 @@ class GathererTests(unittest.TestCase):
 
         new_gatherer = Gatherer(inst_list, self.lock, False)
         new_gatherer.start()
-        sleep(0.5)
-        gather_data.assert_called()
+        new_gatherer.join()
 
         update.assert_not_called()
 

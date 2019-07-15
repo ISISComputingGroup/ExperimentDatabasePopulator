@@ -97,11 +97,11 @@ def create_exp_team(user, role, rb_number, date):
     return ExperimentTeamData(user, role, rb_number, date)
 
 
-def reformat_data(data_list):
+def reformat_data(instrument_data_list):
     """
     Reformats the data from the way the website returns it to the way the database wants it.
     Args:
-        data_list (list): List of all data returned by the website.
+        instrument_data_list (list): List of an instrument's data from the website.
 
     Returns:
         tuple (list, list): A list of the experiments and their associated data and a list of the experiment teams,
@@ -111,7 +111,7 @@ def reformat_data(data_list):
         experiments = []
         exp_teams = []
 
-        for data in data_list:
+        for data in instrument_data_list:
 
             experiments.append({Experiment.experimentid: data['rbNumber'],
                                 Experiment.startdate: data['scheduledDate'],

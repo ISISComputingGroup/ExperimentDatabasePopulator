@@ -66,14 +66,21 @@ def populate(experiments, experiment_teams):
         Experimentteams.insert_many(batch).on_conflict_ignore().execute()
 
 
-def update(instrument_name, instrument_host, db_lock, data, run_continuous=False):
+def update(instrument_name, instrument_host, db_lock, instrument_data, run_continuous=False):
     """
     Populates the database with this experiment's data.
+
+    Args:
+        instrument_name: The name of the instrument to update.
+        instrument_host: The host name of the instrument to update.
+        db_lock: A lock for writing to the database.
+        instrument_data: The data to send to the instrument.
+        run_continuous: Whether or not the program is running in continuous mode.
     """
     database = create_database(instrument_host)
     logging.info("Performing {} update for {}".format("hourly" if run_continuous else "single", instrument_name))
     try:
-        experiments, experiment_teams = data
+        experiments, experiment_teams = instrument_data
         with db_lock:
             database_proxy.initialize(database)
             populate(experiments, experiment_teams)
