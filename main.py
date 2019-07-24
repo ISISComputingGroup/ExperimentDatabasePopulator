@@ -1,4 +1,5 @@
-from exp_db_populator.populator import Populator
+
+from exp_db_populator.gatherer import Gatherer
 import epics
 import zlib
 import json
@@ -41,22 +42,11 @@ def convert_inst_list(value_from_PV):
     return json.loads(json_string)
 
 
-def correct_name(old_name):
-    """
-    Some names are different between IBEX and the web data, this function converts these.
-    Args:
-        old_name: The IBEX name
-    Returns:
-        str: The web name
-    """
-    return "ENGIN-X" if old_name == "ENGINX" else old_name
-
-
 class InstrumentPopulatorRunner:
     """
-    Responsible for managing the threads that will populate each instrument.
+    Responsible for managing the thread that will gather the data and populate each instrument.
     """
-    instruments = {}
+    gatherer = None
     prev_inst_list = None
     db_lock = threading.RLock()
 
@@ -80,42 +70,35 @@ class InstrumentPopulatorRunner:
             self.prev_inst_list = new_inst_list
             self.inst_list_changes(new_inst_list)
 
-    def remove_all_populators(self):
+    def remove_gatherer(self):
         """
-        Stops all populators and clears the cached list.
+        Stops the gatherer and clears the cache.
         """
-        # Faster if all threads are stopped first, then joined after.
-        for populator in self.instruments.values():
-            populator.running = False
-
-        self.wait_for_populators_to_finish()
-
-        self.instruments.clear()
+        # Faster if thread is stopped first, then joined after.
+        if self.gatherer is not None:
+            self.gatherer.running = False
+            self.wait_for_gatherer_to_finish()
+            self.gatherer = None
 
     def inst_list_changes(self, inst_list):
         """
-        Starts a new populator thread for each instrument.
+        Starts a new gatherer thread.
         Args:
-            inst_list (dict): Information about all instruments.
+            inst_list (list): Information about all instruments.
         """
-        # Easiest way to make sure all populators are up to date is stop them all and start them again
-        self.remove_all_populators()
 
-        for inst in inst_list:
-            if inst["isScheduled"]:
-                name, host = correct_name(inst["name"]), inst["hostName"]
-                try:
-                    new_populator = Populator(name, host, self.db_lock, self.run_continuous)
-                    new_populator.start()
-                    self.instruments[name] = new_populator
-                except Exception as e:
-                    logging.error("Unable to connect to {}: {}".format(name, e))
+        # Easiest way to make sure gatherer is up to date is to restart it
+        self.remove_gatherer()
 
-    def wait_for_populators_to_finish(self):
+        new_gatherer = Gatherer(inst_list, self.db_lock, self.run_continuous)
+        new_gatherer.start()
+        self.gatherer = new_gatherer
+
+    def wait_for_gatherer_to_finish(self):
         """
-        Blocks until all populators are finished.
+        Blocks until gatherer is finished.
         """
-        [populator.join() for populator in self.instruments.values()]
+        self.gatherer.join()
 
 
 if __name__ == '__main__':
@@ -141,12 +124,11 @@ if __name__ == '__main__':
             if menu_input and isinstance(menu_input, str):
                 logging.info("User entered {}".format(menu_input))
                 if menu_input == "Q":
-                    main.remove_all_populators()
+                    main.remove_gatherer()
                     running = False
                 elif menu_input == "U":
                     main.inst_list_changes(main.prev_inst_list)
                 else:
                     logging.warning("Command not recognised: {}".format(menu_input))
     else:
-        main.wait_for_populators_to_finish()
-
+        main.wait_for_gatherer_to_finish()
