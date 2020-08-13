@@ -18,9 +18,9 @@ LOCAL_ROLE = "Contact"
 RELEVANT_DATE_RANGE = 100  # How many days of data to gather (either side of now)
 DATE_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
-BUS_APPS_SITE = "https://fitbaweb1.isis.cclrc.ac.uk:8443/"
-BUS_APPS_AUTH = BUS_APPS_SITE + "UserOfficeWebService/UserOfficeWebService?wsdl"
-BUS_APPS_API = BUS_APPS_SITE + "ScheduleSessionBeanService/ScheduleSessionBean?wsdl"
+BUS_APPS_SITE = "https://api.facilities.rl.ac.uk/ws/"
+BUS_APPS_AUTH = BUS_APPS_SITE + "UserOfficeWebService?wsdl"
+BUS_APPS_API = BUS_APPS_SITE + "ScheduleWebService?wsdl"
 
 # This is a workaround because the web service does not have a valid certificate
 if hasattr(ssl, '_create_unverified_context'):
