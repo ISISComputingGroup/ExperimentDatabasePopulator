@@ -43,6 +43,7 @@ pipeline {
         }
         
         bat """
+            C:/Instrument/Apps/Python3/python.exe -m pip install virtualenv
             C:/Instrument/Apps/Python3/Scripts/pip.exe install virtualenv
             C:/Instrument/Apps/Python3/Scripts/virtualenv.exe my_python
             call my_python\\Scripts\\activate.bat
