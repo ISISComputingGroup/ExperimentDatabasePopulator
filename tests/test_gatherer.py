@@ -12,10 +12,16 @@ class GathererTests(unittest.TestCase):
 
     @patch('exp_db_populator.gatherer.update')
     @patch('exp_db_populator.gatherer.gather_data')
-    def test_GIVEN_instrument_list_has_scheduled_instrument_WHEN_gatherer_started_THEN_update_runs(self, gather_data, update):
+    def test_GIVEN_instrument_list_has_scheduled_instrument_WHEN_gatherer_started_THEN_update_runs(self, gather_data,
+                                                                                                   update):
         new_name, new_host = "TEST", "NDXTEST"
         inst_list = [{"name": new_name, "hostName": new_host, "isScheduled": True}]
-        gather_data.return_value = []
+        gather_data.return_value = [{'instrument': "TEST",
+                                     'rbNumber': 1,
+                                     'scheduledDate': "1-1-1",
+                                     'timeAllocated': 1,
+                                     'lcName': "TEST",
+                                     }]
 
         new_gatherer = Gatherer(inst_list, self.lock, False)
         new_gatherer.start()
@@ -25,7 +31,35 @@ class GathererTests(unittest.TestCase):
 
     @patch('exp_db_populator.gatherer.update')
     @patch('exp_db_populator.gatherer.gather_data')
-    def test_GIVEN_instrument_list_has_unscheduled_instrument_WHEN_gatherer_started_THEN_no_update(self, gather_data, update):
+    def test_GIVEN_no_data_WHEN_gatherer_started_THEN_no_update(self, gather_data, update):
+        new_name, new_host = "TEST", "NDXTEST"
+        inst_list = [{"name": new_name, "hostName": new_host, "isScheduled": True}]
+        gather_data.return_value = []
+
+        new_gatherer = Gatherer(inst_list, self.lock, False)
+        new_gatherer.start()
+        new_gatherer.join()
+
+        update.assert_not_called()
+
+    @patch('exp_db_populator.gatherer.update')
+    @patch('exp_db_populator.gatherer.gather_data')
+    def test_GIVEN_instrument_list_has_unscheduled_instrument_WHEN_gatherer_started_THEN_no_update(self, gather_data,
+                                                                                                   update):
+        new_name, new_host = "TEST", "NDXTEST"
+        inst_list = [{"name": new_name, "hostName": new_host, "isScheduled": False}]
+        gather_data.return_value = []
+
+        new_gatherer = Gatherer(inst_list, self.lock, False)
+        new_gatherer.start()
+        new_gatherer.join()
+
+        update.assert_not_called()
+
+    @patch('exp_db_populator.gatherer.update')
+    @patch('exp_db_populator.gatherer.gather_data')
+    def test_GIVEN_instrument_list_has_unscheduled_instrument_WHEN_gatherer_started_THEN_no_update(self, gather_data,
+                                                                                                   update):
         new_name, new_host = "TEST", "NDXTEST"
         inst_list = [{"name": new_name, "hostName": new_host, "isScheduled": False}]
         gather_data.return_value = []
