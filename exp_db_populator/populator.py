@@ -66,6 +66,30 @@ def populate(experiments, experiment_teams):
         Experimentteams.insert_many(batch).on_conflict_ignore().execute()
 
 
+def empty_update(instrument_name, instrument_host, db_lock):
+    """
+        Handles Removing out of date data if there is nothing to update.
+
+        Args:
+            instrument_name: The name of the instrument to update.
+            instrument_host: The host name of the instrument to update.
+            db_lock: A lock for writing to the database.
+        """
+    database = create_database(instrument_host)
+    logging.error(
+        "Unable to update {}, no data found. Expired data will still be cleared.".format(instrument_name))
+    logging.info("Clearing expired data for {}".format(instrument_name))
+    try:
+        with db_lock:
+            database_proxy.initialize(database)
+            cleanup_old_data()
+            database_proxy.initialize(None)  # Ensure no other populators send to the wrong database
+        logging.info("{} experiment data cleared successfully".format(instrument_name))
+    except Exception:
+        logging.exception("{} unable to clear database, will try again in {} seconds".format(
+            instrument_name, POLLING_TIME))
+
+
 def update(instrument_name, instrument_host, db_lock, instrument_data, run_continuous=False):
     """
     Populates the database with this experiment's data.
