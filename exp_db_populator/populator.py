@@ -74,16 +74,17 @@ def update(instrument_name, instrument_host, db_lock, instrument_data, run_conti
         instrument_name: The name of the instrument to update.
         instrument_host: The host name of the instrument to update.
         db_lock: A lock for writing to the database.
-        instrument_data: The data to send to the instrument.
+        instrument_data: The data to send to the instrument, if None the data will just be cleared instead.
         run_continuous: Whether or not the program is running in continuous mode.
     """
     database = create_database(instrument_host)
     logging.info("Performing {} update for {}".format("hourly" if run_continuous else "single", instrument_name))
     try:
-        experiments, experiment_teams = instrument_data
         with db_lock:
             database_proxy.initialize(database)
-            populate(experiments, experiment_teams)
+            if instrument_data is not None:
+                experiments, experiment_teams = instrument_data
+                populate(experiments, experiment_teams)
             cleanup_old_data()
             database_proxy.initialize(None)  # Ensure no other populators send to the wrong database
 

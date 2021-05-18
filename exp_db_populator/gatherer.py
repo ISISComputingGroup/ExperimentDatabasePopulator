@@ -51,11 +51,15 @@ class Gatherer(threading.Thread):
         """
         while self.running:
             all_data = gather_data()
-
             for inst in self.inst_list:
                 if inst["isScheduled"]:
                     name, host = correct_name(inst["name"]), inst["hostName"]
-                    data_to_populate = reformat_data(filter_instrument_data(all_data, name))
+                    instrument_list = filter_instrument_data(all_data, name)
+                    if not instrument_list:
+                        logging.error(f"Unable to update {name}, no data found. Expired data will still be cleared.")
+                        data_to_populate = None
+                    else:
+                        data_to_populate = reformat_data(instrument_list)
                     try:
                         update(name, host, self.db_lock, data_to_populate, self.run_continuous)
                     except Exception as e:
