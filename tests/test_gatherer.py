@@ -30,9 +30,8 @@ class GathererTests(unittest.TestCase):
         update.assert_called()
 
     @patch('exp_db_populator.gatherer.update')
-    @patch('exp_db_populator.gatherer.empty_update')
     @patch('exp_db_populator.gatherer.gather_data')
-    def test_GIVEN_no_data_WHEN_gatherer_started_THEN_no_update(self, gather_data, empty_update, update):
+    def test_GIVEN_no_data_WHEN_gatherer_started_THEN_no_update(self, gather_data, update):
         new_name, new_host = "TEST", "NDXTEST"
         inst_list = [{"name": new_name, "hostName": new_host, "isScheduled": True}]
         gather_data.return_value = []
@@ -41,8 +40,7 @@ class GathererTests(unittest.TestCase):
         new_gatherer.start()
         new_gatherer.join()
 
-        update.assert_not_called()
-        empty_update.assert_called()
+        update.assert_called_with(new_name, new_host, self.lock, None, False)
 
     @patch('exp_db_populator.gatherer.update')
     @patch('exp_db_populator.gatherer.gather_data')

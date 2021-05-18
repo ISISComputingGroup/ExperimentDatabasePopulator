@@ -1,4 +1,4 @@
-from exp_db_populator.populator import update, empty_update
+from exp_db_populator.populator import update
 from exp_db_populator.webservices_reader import gather_data, reformat_data
 import threading
 import logging
@@ -56,12 +56,10 @@ class Gatherer(threading.Thread):
                     name, host = correct_name(inst["name"]), inst["hostName"]
                     instrument_list = filter_instrument_data(all_data, name)
                     if not instrument_list:
-                        try:
-                            empty_update(name, host, self.db_lock)
-                        except Exception as e:
-                            logging.error("Unable to connect to {}: {}".format(name, e))
-                        continue
-                    data_to_populate = reformat_data(instrument_list)
+                        logging.error(f"Unable to update {name}, no data found. Expired data will still be cleared.")
+                        data_to_populate = None
+                    else:
+                        data_to_populate = reformat_data(instrument_list)
                     try:
                         update(name, host, self.db_lock, data_to_populate, self.run_continuous)
                     except Exception as e:
