@@ -10,14 +10,11 @@ from logging.handlers import TimedRotatingFileHandler
 import os
 from six.moves import input
 import argparse
-
-
-# PV that contains the instrument list
 from exp_db_populator.populator import update
 from exp_db_populator.webservices_reader import reformat_data
-from tests.webservices_test_data import create_web_data_with_experimenters, \
-    create_web_data_with_experimenters_and_other_date, TEST_USER_1
+from tests.webservices_test_data import create_web_data_with_experimenters_and_other_date, TEST_USER_1
 
+# PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
 
 log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
