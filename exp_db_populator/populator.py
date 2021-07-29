@@ -9,7 +9,7 @@ try:
 except ImportError as e:
     logging.error("Password submodule not found, will not be able to write to databases")
 
-AGE_OF_EXPIRATION = 100  # How old (in days) the startdate of an experiment must be before it is removed from the database
+AGE_OF_EXPIRATION = 1  # How old (in days) the startdate of an experiment must be before it is removed from the database
 POLLING_TIME = 3600  # Time in seconds between polling the website
 
 
@@ -28,8 +28,11 @@ def remove_old_experiment_teams(age):
     Experimentteams.delete().where(Experimentteams.startdate < date).execute()
 
 
-def create_database(instrument_host):
-    username, password = get_credentials(CREDS_GROUP, "ExpDatabaseWrite")
+def create_database(instrument_host, credentials):
+    if not credentials:
+        username, password = get_credentials(CREDS_GROUP, "ExpDatabaseWrite")
+    else:
+        username, password = credentials
     return MySQLDatabase("exp_data", user=username, password=password, host=instrument_host)
 
 
@@ -66,7 +69,7 @@ def populate(experiments, experiment_teams):
         Experimentteams.insert_many(batch).on_conflict_ignore().execute()
 
 
-def update(instrument_name, instrument_host, db_lock, instrument_data, run_continuous=False):
+def update(instrument_name, instrument_host, db_lock, instrument_data, run_continuous=False, credentials=None):
     """
     Populates the database with this experiment's data.
 
@@ -76,8 +79,10 @@ def update(instrument_name, instrument_host, db_lock, instrument_data, run_conti
         db_lock: A lock for writing to the database.
         instrument_data: The data to send to the instrument, if None the data will just be cleared instead.
         run_continuous: Whether or not the program is running in continuous mode.
+        credentials: The credentials to write to the database with, in the form (user, password). If None then the
+              credentials are received from the stored git repo
     """
-    database = create_database(instrument_host)
+    database = create_database(instrument_host, credentials)
     logging.info("Performing {} update for {}".format("hourly" if run_continuous else "single", instrument_name))
     try:
         with db_lock:
