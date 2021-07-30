@@ -1,22 +1,10 @@
 from datetime import datetime
 
-from exp_db_populator.gatherer import Gatherer
-import epics
-import zlib
-import json
-import threading
-import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
-from six.moves import input
-import argparse
-from exp_db_populator.populator import update
-from exp_db_populator.webservices_reader import reformat_data
-from tests.webservices_test_data import create_web_data_with_experimenters_and_other_date, TEST_USER_1
+import logging
 
-# PV that contains the instrument list
-INST_LIST_PV = "CS:INSTLIST"
-
+# Loging must be handled here as some imports might log errors
 log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
 if not os.path.exists(log_folder):
     os.makedirs(log_folder)
@@ -29,6 +17,20 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
+from exp_db_populator.gatherer import Gatherer
+import epics
+import zlib
+import json
+import threading
+from six.moves import input
+import argparse
+from exp_db_populator.populator import update
+from exp_db_populator.webservices_reader import reformat_data
+from tests.webservices_test_data import create_web_data_with_experimenters_and_other_date, TEST_USER_1
+
+# PV that contains the instrument list
+INST_LIST_PV = "CS:INSTLIST"
 
 
 def convert_inst_list(value_from_PV):
@@ -123,7 +125,8 @@ if __name__ == '__main__':
         main.inst_list_changes(debug_inst_list)
     elif args.test_data:
         data = [create_web_data_with_experimenters_and_other_date([TEST_USER_1], datetime.now())]
-        update("localhost", "localhost", threading.RLock(), reformat_data(data))
+        update("localhost", "localhost", threading.RLock(), reformat_data(data),
+               credentials=(args.db_user, args.db_pass))
     else:
         main.start_inst_list_monitor()
 

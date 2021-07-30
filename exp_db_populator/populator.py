@@ -7,7 +7,8 @@ import logging
 try:
     from exp_db_populator.passwords.password_reader import get_credentials
 except ImportError as e:
-    logging.error("Password submodule not found, will not be able to write to databases")
+    logging.warn("Password submodule not found, will not be able to write to databases, "
+                 "unless username/password are specified manually")
 
 AGE_OF_EXPIRATION = 100  # How old (in days) the startdate of an experiment must be before it is removed from the database
 POLLING_TIME = 3600  # Time in seconds between polling the website
