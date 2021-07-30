@@ -1,21 +1,10 @@
+from datetime import datetime
 
-from exp_db_populator.gatherer import Gatherer
-import epics
-import zlib
-import json
-import threading
-import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
-from six.moves import input
-import argparse
+import logging
 
-
-# PV that contains the instrument list
-INST_LIST_PV = "CS:INSTLIST"
-
-DEBUG = False
-
+# Loging must be handled here as some imports might log errors
 log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
 if not os.path.exists(log_folder):
     os.makedirs(log_folder)
@@ -28,6 +17,20 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
+from exp_db_populator.gatherer import Gatherer
+import epics
+import zlib
+import json
+import threading
+from six.moves import input
+import argparse
+from exp_db_populator.populator import update
+from exp_db_populator.webservices_reader import reformat_data
+from tests.webservices_test_data import create_web_data_with_experimenters_and_other_date, TEST_USER_1
+
+# PV that contains the instrument list
+INST_LIST_PV = "CS:INSTLIST"
 
 
 def convert_inst_list(value_from_PV):
@@ -105,30 +108,42 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cont', action='store_true',
                         help="Runs the populator continually, updating periodically. Otherwise run once.")
+    parser.add_argument('--test_data', action='store_true',
+                        help="Puts test data into the local database")
+    parser.add_argument('--as_instrument', type=str, default=None,
+                        help="Puts the specified instruments data into the local database")
+    parser.add_argument('--db_user', type=str, default=None,
+                        help="The username to use for writing to the database")
+    parser.add_argument('--db_pass', type=str, default=None,
+                        help="The password to use for writing to the database")
     args = parser.parse_args()
 
     main = InstrumentPopulatorRunner(args.cont)
-    if DEBUG:
-        debug_inst_list = [{"name": "LARMOR", "hostName": "localhost", "isScheduled": True}]
+    if args.as_instrument:
+        debug_inst_list = [{"name": args.as_instrument, "hostName": "localhost", "isScheduled": True}]
         main.prev_inst_list = debug_inst_list
         main.inst_list_changes(debug_inst_list)
+    elif args.test_data:
+        data = [create_web_data_with_experimenters_and_other_date([TEST_USER_1], datetime.now())]
+        update("localhost", "localhost", threading.RLock(), reformat_data(data),
+               credentials=(args.db_user, args.db_pass))
     else:
         main.start_inst_list_monitor()
 
-    if args.cont:
-        running = True
-        menu_string = 'Enter U to force update from instrument list or Q to Quit\n '
+        if args.cont:
+            running = True
+            menu_string = 'Enter U to force update from instrument list or Q to Quit\n '
 
-        while running:
-            menu_input = input(menu_string).upper()
-            if menu_input and isinstance(menu_input, str):
-                logging.info("User entered {}".format(menu_input))
-                if menu_input == "Q":
-                    main.remove_gatherer()
-                    running = False
-                elif menu_input == "U":
-                    main.inst_list_changes(main.prev_inst_list)
-                else:
-                    logging.warning("Command not recognised: {}".format(menu_input))
-    else:
-        main.wait_for_gatherer_to_finish()
+            while running:
+                menu_input = input(menu_string).upper()
+                if menu_input and isinstance(menu_input, str):
+                    logging.info("User entered {}".format(menu_input))
+                    if menu_input == "Q":
+                        main.remove_gatherer()
+                        running = False
+                    elif menu_input == "U":
+                        main.inst_list_changes(main.prev_inst_list)
+                    else:
+                        logging.warning("Command not recognised: {}".format(menu_input))
+        else:
+            main.wait_for_gatherer_to_finish()

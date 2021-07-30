@@ -11,7 +11,7 @@ import logging
 try:
     from exp_db_populator.passwords.password_reader import get_credentials
 except ImportError as e:
-    logging.error("Password submodule not found, will not be able to read from web")
+    logging.warn("Password submodule not found, will not be able to read from web")
 
 LOCAL_ORG = "Science and Technology Facilities Council"
 LOCAL_ROLE = "Contact"
