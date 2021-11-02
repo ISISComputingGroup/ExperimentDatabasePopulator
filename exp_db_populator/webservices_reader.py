@@ -113,12 +113,16 @@ def reformat_data(instrument_data_list):
 
         for data in instrument_data_list:
 
+            if not 'lcName' in data:
+                continue
+
             experiments.append({Experiment.experimentid: data['rbNumber'],
                                 Experiment.startdate: data['scheduledDate'],
                                 Experiment.duration: math.ceil(data['timeAllocated'])})
 
-            user_data = UserData(data['lcName'], LOCAL_ORG)
-            exp_teams.append(create_exp_team(user_data, "Contact", data['rbNumber'], data['scheduledDate']))
+            if 'lcName' in data:
+                user_data = UserData(data['lcName'], LOCAL_ORG)
+                exp_teams.append(create_exp_team(user_data, "Contact", data['rbNumber'], data['scheduledDate']))
 
             for user in get_experimenters(data):
                 user_data = UserData(user['name'], user['organisation'])
