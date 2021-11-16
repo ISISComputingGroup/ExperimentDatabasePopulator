@@ -16,3 +16,4 @@ relPaths.sh
 .project
 *.kdb
 *.kdbx
+/exp_db_populator_venv
