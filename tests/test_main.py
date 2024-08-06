@@ -1,7 +1,9 @@
 import unittest
-from mock import patch, Mock
-from main import InstrumentPopulatorRunner
+
+from mock import Mock, patch
+
 from exp_db_populator.gatherer import Gatherer
+from main import InstrumentPopulatorRunner
 
 
 class MainTest(unittest.TestCase):

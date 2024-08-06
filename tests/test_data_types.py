@@ -1,8 +1,10 @@
 import unittest
-import exp_db_populator.database_model as model
+
 from peewee import SqliteDatabase
+
+import exp_db_populator.database_model as model
+from exp_db_populator.data_types import ExperimentTeamData, UserData
 from tests.webservices_test_data import *
-from exp_db_populator.data_types import UserData, ExperimentTeamData
 
 
 class UserDataTests(unittest.TestCase):
@@ -42,7 +44,7 @@ class UserDataTests(unittest.TestCase):
         try:
             self.exp_team_data.role_id
             self.assertTrue(False)
-        except model.Role.DoesNotExist as e:
+        except model.Role.DoesNotExist:
             self.assertTrue(True)
 
         self.assertEqual(0, model.Role.select().count())

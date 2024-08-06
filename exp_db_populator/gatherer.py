@@ -1,8 +1,9 @@
+import logging
+import threading
+from time import sleep
+
 from exp_db_populator.populator import update
 from exp_db_populator.webservices_reader import gather_data, reformat_data
-import threading
-import logging
-from time import sleep
 
 POLLING_TIME = 3600  # Time in seconds between polling the website
 

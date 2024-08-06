@@ -1,11 +1,19 @@
 import unittest
-from exp_db_populator.database_model import Experiment
-from tests.webservices_test_data import *
-from exp_db_populator.data_types import UserData, ExperimentTeamData
-from exp_db_populator.webservices_reader import LOCAL_ORG, LOCAL_ROLE, reformat_data, \
-    get_start_and_end, get_experimenters, create_exp_team
 from datetime import datetime, timedelta
+
 from mock import MagicMock
+
+from exp_db_populator.data_types import ExperimentTeamData, UserData
+from exp_db_populator.database_model import Experiment
+from exp_db_populator.webservices_reader import (
+    LOCAL_ORG,
+    LOCAL_ROLE,
+    create_exp_team,
+    get_experimenters,
+    get_start_and_end,
+    reformat_data,
+)
+from tests.webservices_test_data import *
 
 
 class WebServicesReaderTests(unittest.TestCase):

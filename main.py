@@ -1,8 +1,7 @@
-from datetime import datetime
-
-from logging.handlers import TimedRotatingFileHandler
-import os
 import logging
+import os
+from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 
 # Loging must be handled here as some imports might log errors
 log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
@@ -18,16 +17,21 @@ logging.basicConfig(
     ]
 )
 
-from exp_db_populator.gatherer import Gatherer
-import epics
-import zlib
+import argparse
 import json
 import threading
+import zlib
+
+import epics
 from six.moves import input
-import argparse
+
+from exp_db_populator.gatherer import Gatherer
 from exp_db_populator.populator import update
 from exp_db_populator.webservices_reader import reformat_data
-from tests.webservices_test_data import create_web_data_with_experimenters_and_other_date, TEST_USER_1
+from tests.webservices_test_data import (
+    TEST_USER_1,
+    create_web_data_with_experimenters_and_other_date,
+)
 
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"

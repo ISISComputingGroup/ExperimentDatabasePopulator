@@ -1,8 +1,9 @@
-import unittest
-from exp_db_populator.gatherer import Gatherer, filter_instrument_data
-from mock import patch
-from time import sleep
 import threading
+import unittest
+
+from mock import patch
+
+from exp_db_populator.gatherer import Gatherer, filter_instrument_data
 
 
 class GathererTests(unittest.TestCase):

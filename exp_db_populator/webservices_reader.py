@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-from suds.client import Client
-import ssl
-from exp_db_populator.data_types import UserData, ExperimentTeamData
-from datetime import datetime, timedelta
-from exp_db_populator.database_model import Experiment
-from exp_db_populator.data_types import CREDS_GROUP
-import math
 import logging
+import math
+import ssl
+from datetime import datetime, timedelta
+
+from suds.client import Client
+
+from exp_db_populator.data_types import CREDS_GROUP, ExperimentTeamData, UserData
+from exp_db_populator.database_model import Experiment
 
 try:
     from exp_db_populator.passwords.password_reader import get_credentials
-except ImportError as e:
+except ImportError:
     logging.warn("Password submodule not found, will not be able to read from web")
 
 LOCAL_ORG = "Science and Technology Facilities Council"

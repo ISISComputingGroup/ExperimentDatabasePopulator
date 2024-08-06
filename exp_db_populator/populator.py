@@ -1,12 +1,14 @@
-from exp_db_populator.database_model import User, Experiment, Experimentteams, database_proxy
-from exp_db_populator.data_types import CREDS_GROUP
-from datetime import datetime, timedelta
-from peewee import MySQLDatabase, chunked
 import logging
+from datetime import datetime, timedelta
+
+from peewee import MySQLDatabase, chunked
+
+from exp_db_populator.data_types import CREDS_GROUP
+from exp_db_populator.database_model import Experiment, Experimentteams, User, database_proxy
 
 try:
     from exp_db_populator.passwords.password_reader import get_credentials
-except ImportError as e:
+except ImportError:
     logging.warn("Password submodule not found, will not be able to write to databases, "
                  "unless username/password are specified manually")
 

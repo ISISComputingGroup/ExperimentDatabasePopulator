@@ -1,9 +1,11 @@
+import argparse
 import os
 import sys
+
 # Standard imports
 import unittest
+
 import xmlrunner
-import argparse
 
 DEFAULT_DIRECTORY = os.path.join('.', 'test-reports')
 

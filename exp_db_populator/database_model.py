@@ -1,4 +1,5 @@
 from peewee import *
+
 # Model built using peewiz
 
 database_proxy = Proxy()

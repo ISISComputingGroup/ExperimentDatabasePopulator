@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from mock import MagicMock
+
 TEST_INSTRUMENT = 'test_instrument'
 TEST_OTHER_INSTRUMENT = "test_other_instrument"
 TEST_RBNUMBER = '10000'
