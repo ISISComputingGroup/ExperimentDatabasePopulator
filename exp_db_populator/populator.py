@@ -9,8 +9,10 @@ from exp_db_populator.database_model import Experiment, Experimentteams, User, d
 try:
     from exp_db_populator.passwords.password_reader import get_credentials
 except ImportError:
-    logging.warn("Password submodule not found, will not be able to write to databases, "
-                 "unless username/password are specified manually")
+    logging.warn(
+        "Password submodule not found, will not be able to write to databases, "
+        "unless username/password are specified manually"
+    )
 
 AGE_OF_EXPIRATION = 100  # How old (in days) the startdate of an experiment must be before it is removed from the database
 POLLING_TIME = 3600  # Time in seconds between polling the website
@@ -62,17 +64,28 @@ def populate(experiments, experiment_teams):
     for batch in chunked(experiments, 100):
         Experiment.insert_many(batch).on_conflict_replace().execute()
 
-    teams_update = [{Experimentteams.experimentid: exp_team.rb_number,
-                     Experimentteams.roleid: exp_team.role_id,
-                     Experimentteams.startdate: exp_team.start_date,
-                     Experimentteams.userid: exp_team.user.user_id}
-                    for exp_team in experiment_teams]
+    teams_update = [
+        {
+            Experimentteams.experimentid: exp_team.rb_number,
+            Experimentteams.roleid: exp_team.role_id,
+            Experimentteams.startdate: exp_team.start_date,
+            Experimentteams.userid: exp_team.user.user_id,
+        }
+        for exp_team in experiment_teams
+    ]
 
     for batch in chunked(teams_update, 100):
         Experimentteams.insert_many(batch).on_conflict_ignore().execute()
 
 
-def update(instrument_name, instrument_host, db_lock, instrument_data, run_continuous=False, credentials=None):
+def update(
+    instrument_name,
+    instrument_host,
+    db_lock,
+    instrument_data,
+    run_continuous=False,
+    credentials=None,
+):
     """
     Populates the database with this experiment's data.
 
@@ -86,7 +99,11 @@ def update(instrument_name, instrument_host, db_lock, instrument_data, run_conti
               credentials are received from the stored git repo
     """
     database = create_database(instrument_host, credentials)
-    logging.info("Performing {} update for {}".format("hourly" if run_continuous else "single", instrument_name))
+    logging.info(
+        "Performing {} update for {}".format(
+            "hourly" if run_continuous else "single", instrument_name
+        )
+    )
     try:
         with db_lock:
             database_proxy.initialize(database)
@@ -98,5 +115,8 @@ def update(instrument_name, instrument_host, db_lock, instrument_data, run_conti
 
         logging.info("{} experiment data updated successfully".format(instrument_name))
     except Exception:
-        logging.exception("{} unable to populate database, will try again in {} seconds".format(
-            instrument_name, POLLING_TIME))
+        logging.exception(
+            "{} unable to populate database, will try again in {} seconds".format(
+                instrument_name, POLLING_TIME
+            )
+        )

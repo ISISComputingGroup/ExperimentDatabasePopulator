@@ -4,17 +4,17 @@ from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
 # Loging must be handled here as some imports might log errors
-log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'logs')
+log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "logs")
 if not os.path.exists(log_folder):
     os.makedirs(log_folder)
-log_filepath = os.path.join(log_folder, 'Exp_DB_Pop.log')
+log_filepath = os.path.join(log_folder, "Exp_DB_Pop.log")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        TimedRotatingFileHandler(log_filepath, when='midnight', backupCount=30),
-        logging.StreamHandler()
-    ]
+        TimedRotatingFileHandler(log_filepath, when="midnight", backupCount=30),
+        logging.StreamHandler(),
+    ],
 )
 
 import argparse
@@ -53,6 +53,7 @@ class InstrumentPopulatorRunner:
     """
     Responsible for managing the thread that will gather the data and populate each instrument.
     """
+
     gatherer = None
     prev_inst_list = None
     db_lock = threading.RLock()
@@ -108,35 +109,52 @@ class InstrumentPopulatorRunner:
         self.gatherer.join()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cont', action='store_true',
-                        help="Runs the populator continually, updating periodically. Otherwise run once.")
-    parser.add_argument('--test_data', action='store_true',
-                        help="Puts test data into the local database")
-    parser.add_argument('--as_instrument', type=str, default=None,
-                        help="Puts the specified instruments data into the local database")
-    parser.add_argument('--db_user', type=str, default=None,
-                        help="The username to use for writing to the database")
-    parser.add_argument('--db_pass', type=str, default=None,
-                        help="The password to use for writing to the database")
+    parser.add_argument(
+        "--cont",
+        action="store_true",
+        help="Runs the populator continually, updating periodically. Otherwise run once.",
+    )
+    parser.add_argument(
+        "--test_data", action="store_true", help="Puts test data into the local database"
+    )
+    parser.add_argument(
+        "--as_instrument",
+        type=str,
+        default=None,
+        help="Puts the specified instruments data into the local database",
+    )
+    parser.add_argument(
+        "--db_user", type=str, default=None, help="The username to use for writing to the database"
+    )
+    parser.add_argument(
+        "--db_pass", type=str, default=None, help="The password to use for writing to the database"
+    )
     args = parser.parse_args()
 
     main = InstrumentPopulatorRunner(args.cont)
     if args.as_instrument:
-        debug_inst_list = [{"name": args.as_instrument, "hostName": "localhost", "isScheduled": True}]
+        debug_inst_list = [
+            {"name": args.as_instrument, "hostName": "localhost", "isScheduled": True}
+        ]
         main.prev_inst_list = debug_inst_list
         main.inst_list_changes(debug_inst_list)
     elif args.test_data:
         data = [create_web_data_with_experimenters_and_other_date([TEST_USER_1], datetime.now())]
-        update("localhost", "localhost", threading.RLock(), reformat_data(data),
-               credentials=(args.db_user, args.db_pass))
+        update(
+            "localhost",
+            "localhost",
+            threading.RLock(),
+            reformat_data(data),
+            credentials=(args.db_user, args.db_pass),
+        )
     else:
         main.start_inst_list_monitor()
 
         if args.cont:
             running = True
-            menu_string = 'Enter U to force update from instrument list or Q to Quit\n '
+            menu_string = "Enter U to force update from instrument list or Q to Quit\n "
 
             while running:
                 menu_input = input(menu_string).upper()
