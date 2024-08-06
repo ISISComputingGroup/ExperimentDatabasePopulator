@@ -1,8 +1,9 @@
+import logging
+import threading
+from time import sleep
+
 from exp_db_populator.populator import update
 from exp_db_populator.webservices_reader import gather_data, reformat_data
-import threading
-import logging
-from time import sleep
 
 POLLING_TIME = 3600  # Time in seconds between polling the website
 
@@ -27,7 +28,7 @@ def filter_instrument_data(raw_data, inst_name):
     Returns:
         list: The data associated with the specified instrument
     """
-    return [x for x in raw_data if x['instrument'] == inst_name]
+    return [x for x in raw_data if x["instrument"] == inst_name]
 
 
 class Gatherer(threading.Thread):
@@ -35,6 +36,7 @@ class Gatherer(threading.Thread):
     An instance of this class runs on a thread in the background.
     Every hour, it gathers data from the website and sends it to all of the instruments.
     """
+
     running = True
 
     def __init__(self, inst_list, db_lock, run_continuous=False):
@@ -56,7 +58,9 @@ class Gatherer(threading.Thread):
                     name, host = correct_name(inst["name"]), inst["hostName"]
                     instrument_list = filter_instrument_data(all_data, name)
                     if not instrument_list:
-                        logging.error(f"Unable to update {name}, no data found. Expired data will still be cleared.")
+                        logging.error(
+                            f"Unable to update {name}, no data found. Expired data will still be cleared."
+                        )
                         data_to_populate = None
                     else:
                         data_to_populate = reformat_data(instrument_list)
