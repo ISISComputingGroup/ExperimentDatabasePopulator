@@ -17,3 +17,7 @@ relPaths.sh
 *.kdb
 *.kdbx
 /exp_db_populator_venv
+/.venv
+/.coverage
+*.egg-info
+/logs
