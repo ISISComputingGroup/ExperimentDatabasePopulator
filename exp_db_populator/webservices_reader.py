@@ -104,8 +104,9 @@ def reformat_data(instrument_data_list):
         instrument_data_list (list): List of an instrument's data from the website.
 
     Returns:
-        tuple (list, list): A list of the experiments and their associated data and a list of the experiment teams,
-                            and a dictionary of rb_numbers and their associated instrument..
+        tuple (list, list): A list of the experiments and their associated data and a
+            list of the experiment teams, and a dictionary of rb_numbers and their associated
+            instrument.
     """
     try:
         experiments = []

@@ -1,8 +1,8 @@
 import unittest
 
+from exp_db_populator.gatherer import Gatherer
 from mock import Mock, patch
 
-from exp_db_populator.gatherer import Gatherer
 from main import InstrumentPopulatorRunner
 
 

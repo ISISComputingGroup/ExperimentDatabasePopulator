@@ -24,28 +24,28 @@ import zlib
 
 import epics
 from six.moves import input
-
-from exp_db_populator.gatherer import Gatherer
-from exp_db_populator.populator import update
-from exp_db_populator.webservices_reader import reformat_data
 from tests.webservices_test_data import (
     TEST_USER_1,
     create_web_data_with_experimenters_and_other_date,
 )
 
+from exp_db_populator.gatherer import Gatherer
+from exp_db_populator.populator import update
+from exp_db_populator.webservices_reader import reformat_data
+
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
 
 
-def convert_inst_list(value_from_PV):
+def convert_inst_list(value_from_pv):
     """
     Converts the instrument list coming from the PV into a dictionary.
     Args:
-        value_from_PV: The raw value from the PV.
+        value_from_pv: The raw value from the PV.
     Returns:
         dict: The instrument information.
     """
-    json_string = zlib.decompress(bytes.fromhex(value_from_PV)).decode("utf-8")
+    json_string = zlib.decompress(bytes.fromhex(value_from_pv)).decode("utf-8")
     return json.loads(json_string)
 
 
@@ -71,7 +71,8 @@ class InstrumentPopulatorRunner:
         Called when the instrument list PV changes value.
         Args:
             char_value: The string representation of the PV data.
-            **kw: The module will also send other info about the PV, we capture this and don't use it.
+            **kw: The module will also send other info about the PV, we capture this and don't
+                use it.
         """
         new_inst_list = convert_inst_list(char_value)
         if new_inst_list != self.prev_inst_list:

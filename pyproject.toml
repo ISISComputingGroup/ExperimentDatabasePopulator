@@ -74,3 +74,6 @@ directory = "coverage_html_report"
 [tool.setuptools.packages.find]
 include = ["exp_db_populator"]
 namespaces = false
+
+[project.scripts]
+main = "exp_db_populator:main"

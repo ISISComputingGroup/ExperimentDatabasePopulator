@@ -1,8 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
 
-from mock import MagicMock
-
 from exp_db_populator.data_types import ExperimentTeamData, UserData
 from exp_db_populator.database_model import Experiment
 from exp_db_populator.webservices_reader import (
@@ -13,7 +11,28 @@ from exp_db_populator.webservices_reader import (
     get_start_and_end,
     reformat_data,
 )
-from tests.webservices_test_data import *
+from mock import MagicMock
+
+from tests.webservices_test_data import (
+    TEST_CONTACT_NAME,
+    TEST_CONTACTS,
+    TEST_DATA,
+    TEST_DATE,
+    TEST_PI_NAME,
+    TEST_PI_ORG,
+    TEST_PI_ROLE,
+    TEST_RBNUMBER,
+    TEST_TIMEALLOCATED,
+    TEST_USER_1,
+    TEST_USER_1_NAME,
+    TEST_USER_1_ORG,
+    TEST_USER_1_ROLE,
+    TEST_USER_PI,
+    create_data,
+    create_web_data_with_experimenters,
+    create_web_data_with_experimenters_and_other_date,
+    get_test_experiment_team,
+)
 
 
 class WebServicesReaderTests(unittest.TestCase):

@@ -14,8 +14,11 @@ except ImportError:
         "unless username/password are specified manually"
     )
 
-AGE_OF_EXPIRATION = 100  # How old (in days) the startdate of an experiment must be before it is removed from the database
-POLLING_TIME = 3600  # Time in seconds between polling the website
+# How old (in days) the startdate of an experiment must be before it is removed from the database
+AGE_OF_EXPIRATION = 100
+
+# Time in seconds between polling the website
+POLLING_TIME = 3600
 
 
 def remove_users_not_referenced():
@@ -56,7 +59,8 @@ def populate(experiments, experiment_teams):
 
     Args:
         experiments (list[dict]): A list of dictionaries containing information on experiments.
-        experiment_teams (list[exp_db_populator.data_types.ExperimentTeamData]): A list containing the users for all new experiments.
+        experiment_teams (list[exp_db_populator.data_types.ExperimentTeamData]): A list containing
+            the users for all new experiments.
     """
     if not experiments or not experiment_teams:
         raise KeyError("Experiment without team or vice versa")
@@ -93,10 +97,11 @@ def update(
         instrument_name: The name of the instrument to update.
         instrument_host: The host name of the instrument to update.
         db_lock: A lock for writing to the database.
-        instrument_data: The data to send to the instrument, if None the data will just be cleared instead.
-        run_continuous: Whether or not the program is running in continuous mode.
-        credentials: The credentials to write to the database with, in the form (user, password). If None then the
-              credentials are received from the stored git repo
+        instrument_data: The data to send to the instrument, if None the data will just be
+            cleared instead.
+        run_continuous: Whether the program is running in continuous mode.
+        credentials: The credentials to write to the database with, in the form (user, password).
+            If None then the credentials are received from the stored git repo
     """
     database = create_database(instrument_host, credentials)
     logging.info(

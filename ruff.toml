@@ -4,6 +4,8 @@ exclude = [
     "exp_db_populator/passwords"
 ]
 
+src = ["exp_db_populator"]
+
 # Set the maximum line length to 100.
 line-length = 100
 indent-width = 4
@@ -16,7 +18,6 @@ extend-select = [
     "E501",  # Line too long ({width} > {limit})
     "E",
     "F",
-    "ANN",
 ]
 ignore = [
     "D406",  # Section name should end with a newline ("{name}")
@@ -30,6 +31,9 @@ ignore = [
     "D102",
     "E501",
     "ANN",
+]
+"exp_db_populator/main.py" = [
+    "E402"
 ]
 
 [lint.pydocstyle]

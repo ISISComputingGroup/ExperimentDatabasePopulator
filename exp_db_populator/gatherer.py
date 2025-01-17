@@ -59,7 +59,8 @@ class Gatherer(threading.Thread):
                     instrument_list = filter_instrument_data(all_data, name)
                     if not instrument_list:
                         logging.error(
-                            f"Unable to update {name}, no data found. Expired data will still be cleared."
+                            f"Unable to update {name}, no data found. "
+                            f"Expired data will still be cleared."
                         )
                         data_to_populate = None
                     else:
