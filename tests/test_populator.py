@@ -12,10 +12,7 @@ from exp_db_populator.populator import (
     remove_users_not_referenced,
     update,
 )
-from mock import Mock, patch
-from peewee import SqliteDatabase
-
-from .webservices_test_data import (
+from exp_db_populator.webservices_test_data import (
     TEST_DATE,
     TEST_INSTRUMENT,
     TEST_PI_ROLE,
@@ -23,6 +20,8 @@ from .webservices_test_data import (
     TEST_TIMEALLOCATED,
     TEST_USER_PI,
 )
+from mock import Mock, patch
+from peewee import SqliteDatabase
 
 
 class PopulatorTests(unittest.TestCase):

@@ -50,6 +50,9 @@ dev = [
 "Bug Reports" = "https://github.com/isiscomputinggroup/ExperimentDatabasePopulator/issues"
 "Source" = "https://github.com/isiscomputinggroup/ExperimentDatabasePopulator"
 
+[project.scripts]
+exp_db_populator = "exp_db_populator.cli:main_cli"
+
 [tool.pytest.ini_options]
 testpaths = "tests"
 addopts = "--cov --cov-report=html -vv"
@@ -74,6 +77,3 @@ directory = "coverage_html_report"
 [tool.setuptools.packages.find]
 include = ["exp_db_populator"]
 namespaces = false
-
-[project.scripts]
-main = "exp_db_populator:main"

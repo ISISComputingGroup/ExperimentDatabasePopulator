@@ -2,9 +2,14 @@ import unittest
 
 import exp_db_populator.database_model as model
 from exp_db_populator.data_types import ExperimentTeamData, UserData
+from exp_db_populator.webservices_test_data import (
+    TEST_DATE,
+    TEST_PI_NAME,
+    TEST_PI_ORG,
+    TEST_PI_ROLE,
+    TEST_RBNUMBER,
+)
 from peewee import SqliteDatabase
-
-from .webservices_test_data import TEST_DATE, TEST_PI_NAME, TEST_PI_ORG, TEST_PI_ROLE, TEST_RBNUMBER
 
 
 class UserDataTests(unittest.TestCase):

@@ -3,6 +3,11 @@ import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
+from exp_db_populator.webservices_test_data import (
+    TEST_USER_1,
+    create_web_data_with_experimenters_and_other_date,
+)
+
 # Loging must be handled here as some imports might log errors
 log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "logs")
 if not os.path.exists(log_folder):
@@ -23,11 +28,6 @@ import threading
 import zlib
 
 import epics
-from six.moves import input
-from tests.webservices_test_data import (
-    TEST_USER_1,
-    create_web_data_with_experimenters_and_other_date,
-)
 
 from exp_db_populator.gatherer import Gatherer
 from exp_db_populator.populator import update
@@ -110,7 +110,7 @@ class InstrumentPopulatorRunner:
         self.gatherer.join()
 
 
-if __name__ == "__main__":
+def main_cli():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--cont",
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         main.prev_inst_list = debug_inst_list
         main.inst_list_changes(debug_inst_list)
     elif args.test_data:
-        data = [create_web_data_with_experimenters_and_other_date([TEST_USER_1], datetime.now())]
+        data = [create_web_data_with_experimenters_and_other_date(TEST_USER_1, datetime.now())]
         update(
             "localhost",
             "localhost",
@@ -170,3 +170,7 @@ if __name__ == "__main__":
                         logging.warning("Command not recognised: {}".format(menu_input))
         else:
             main.wait_for_gatherer_to_finish()
+
+
+if __name__ == "__main__":
+    main_cli()

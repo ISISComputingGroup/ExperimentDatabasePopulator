@@ -11,9 +11,7 @@ from exp_db_populator.webservices_reader import (
     get_start_and_end,
     reformat_data,
 )
-from mock import MagicMock
-
-from tests.webservices_test_data import (
+from exp_db_populator.webservices_test_data import (
     TEST_CONTACT_NAME,
     TEST_CONTACTS,
     TEST_DATA,
@@ -33,6 +31,7 @@ from tests.webservices_test_data import (
     create_web_data_with_experimenters_and_other_date,
     get_test_experiment_team,
 )
+from mock import MagicMock
 
 
 class WebServicesReaderTests(unittest.TestCase):

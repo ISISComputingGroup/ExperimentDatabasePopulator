@@ -32,7 +32,7 @@ ignore = [
     "E501",
     "ANN",
 ]
-"exp_db_populator/main.py" = [
+"exp_db_populator/cli.py" = [
     "E402"
 ]
 

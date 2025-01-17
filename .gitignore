@@ -20,4 +20,4 @@ relPaths.sh
 /.venv
 /.coverage
 *.egg-info
-/logs
+logs
