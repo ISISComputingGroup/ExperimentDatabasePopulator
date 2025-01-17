@@ -53,6 +53,9 @@ class Gatherer(threading.Thread):
         """
         while self.running:
             all_data = gather_data()
+
+            print(all_data)
+
             for inst in self.inst_list:
                 if inst["isScheduled"]:
                     name, host = correct_name(inst["name"]), inst["hostName"]
