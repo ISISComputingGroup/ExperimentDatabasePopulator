@@ -30,9 +30,9 @@ dependencies = [
   "suds",
   "pykeepass",
   "peewee",
-  "pymysql",
-  "pyepics",
+  "pymysql[rsa]",
   "cryptography",
+  "pyepics",
   "mock",  # Needed at runtime, not dev-only
 ]
 

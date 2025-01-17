@@ -142,7 +142,9 @@ def main_cli():
         main.prev_inst_list = debug_inst_list
         main.inst_list_changes(debug_inst_list)
     elif args.test_data:
-        data = [create_web_data_with_experimenters_and_other_date(TEST_USER_1, datetime.now())]
+        data = [create_web_data_with_experimenters_and_other_date([TEST_USER_1], datetime.now())]
+        if not args.db_user or not args.db_pass:
+            raise ValueError("Must specify a username and password if using test data")
         update(
             "localhost",
             "localhost",
