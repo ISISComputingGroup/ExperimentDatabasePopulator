@@ -21,3 +21,4 @@ relPaths.sh
 /.coverage
 *.egg-info
 logs
+/build
