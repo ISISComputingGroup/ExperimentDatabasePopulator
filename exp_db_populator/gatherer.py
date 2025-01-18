@@ -2,13 +2,14 @@ import logging
 import threading
 from time import sleep
 
+from exp_db_populator.data_types import InstList, RawDataEntry
 from exp_db_populator.populator import update
 from exp_db_populator.webservices_reader import gather_data, reformat_data
 
 POLLING_TIME = 3600  # Time in seconds between polling the website
 
 
-def correct_name(old_name):
+def correct_name(old_name: str) -> str:
     """
     Some names are different between IBEX and the web data, this function converts these.
     Args:
@@ -19,7 +20,7 @@ def correct_name(old_name):
     return "ENGIN-X" if old_name == "ENGINX" else old_name
 
 
-def filter_instrument_data(raw_data, inst_name):
+def filter_instrument_data(raw_data: list[RawDataEntry], inst_name: str) -> list[RawDataEntry]:
     """
     Gets the data associated with the specified instrument.
     Args:
@@ -39,7 +40,9 @@ class Gatherer(threading.Thread):
 
     running = True
 
-    def __init__(self, inst_list, db_lock, run_continuous=False):
+    def __init__(
+        self, inst_list: InstList, db_lock: threading.RLock, run_continuous: bool = False
+    ) -> None:
         threading.Thread.__init__(self)
         self.daemon = True
         self.inst_list = inst_list
@@ -47,12 +50,12 @@ class Gatherer(threading.Thread):
         self.db_lock = db_lock
         logging.info("Starting gatherer")
 
-    def run(self):
+    def run(self) -> None:
         """
         Periodically runs to gather new data and populate the databases.
         """
         while self.running:
-            all_data = gather_data()
+            all_data: list[RawDataEntry] = gather_data()
 
             for inst in self.inst_list:
                 if inst["isScheduled"]:

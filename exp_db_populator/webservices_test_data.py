@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Any
 
-from mock import MagicMock
+from exp_db_populator.data_types import RawDataEntry
 
 TEST_INSTRUMENT = "test_instrument"
 TEST_OTHER_INSTRUMENT = "test_other_instrument"
@@ -27,21 +28,17 @@ TEST_CONTACTS = [
 ]
 
 
-def get_test_experiment_team(experimenters):
+def get_test_experiment_team(experimenters: list) -> dict[str, Any]:
     team_dict = {
         "experimenters": experimenters,
         "instrument": TEST_INSTRUMENT,
         "part": 6,
         "rbNumber": TEST_RBNUMBER,
     }
-
-    team = MagicMock()
-    team.experimenters = experimenters
-    team.__getitem__.side_effect = team_dict.__getitem__
-    return team
+    return team_dict
 
 
-def create_data(rb, start, duration):
+def create_data(rb: str, start: datetime, duration: float) -> RawDataEntry:
     return {
         "instrument": TEST_INSTRUMENT,
         "lcName": TEST_CONTACT_NAME,
@@ -55,19 +52,15 @@ def create_data(rb, start, duration):
 TEST_DATA = [create_data(TEST_RBNUMBER, TEST_DATE, TEST_TIMEALLOCATED)]
 
 
-def create_web_data_with_experimenters(experimenters):
+def create_web_data_with_experimenters(experimenters: list) -> RawDataEntry:
     data_dict = create_data(TEST_RBNUMBER, TEST_DATE, TEST_TIMEALLOCATED)
-
-    data = MagicMock()
-    data.experimenters = experimenters
-    data.__getitem__.side_effect = data_dict.__getitem__
-    return data
+    data_dict["experimenters"] = experimenters
+    return data_dict
 
 
-def create_web_data_with_experimenters_and_other_date(experimenters, date):
+def create_web_data_with_experimenters_and_other_date(
+    experimenters: list, date: datetime
+) -> RawDataEntry:
     data_dict = create_data(TEST_RBNUMBER, date, TEST_TIMEALLOCATED)
-
-    data = MagicMock()
-    data.experimenters = experimenters
-    data.__getitem__.side_effect = data_dict.__getitem__
-    return data
+    data_dict["experimenters"] = experimenters
+    return data_dict
