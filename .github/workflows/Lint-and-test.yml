@@ -1,0 +1,42 @@
+name: Lint-and-test
+on: [pull_request, workflow_call]
+jobs:
+  call-linter-workflow:
+    uses: ISISComputingGroup/reusable-workflows/.github/workflows/linters.yml@main
+    with:
+      compare-branch: origin/master
+      python-ver: '3.11'
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ "ubuntu-latest" ]
+        # Wide matrix of versions as this may run on a RHEL node with old python versions,
+        # but we also want it to work on dev machines
+        version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        include:
+          - os: "windows-latest"
+            version: '3.11'
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.version }}
+      - name: install requirements
+        run: pip install -e .[dev]
+      - name: run pytest (linux)
+        run: python -m pytest
+  results:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    name: Final Results
+    needs: [call-linter-workflow, tests]
+    steps:
+    - run: exit 1
+      # see https://stackoverflow.com/a/67532120/4907315
+      if: >-
+          ${{
+               contains(needs.*.result, 'failure')
+            || contains(needs.*.result, 'cancelled')
+          }}
