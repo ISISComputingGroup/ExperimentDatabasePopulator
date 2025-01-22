@@ -53,13 +53,15 @@ class Gatherer(threading.Thread):
         """
         while self.running:
             all_data = gather_data()
+
             for inst in self.inst_list:
                 if inst["isScheduled"]:
                     name, host = correct_name(inst["name"]), inst["hostName"]
                     instrument_list = filter_instrument_data(all_data, name)
                     if not instrument_list:
                         logging.error(
-                            f"Unable to update {name}, no data found. Expired data will still be cleared."
+                            f"Unable to update {name}, no data found. "
+                            f"Expired data will still be cleared."
                         )
                         data_to_populate = None
                     else:

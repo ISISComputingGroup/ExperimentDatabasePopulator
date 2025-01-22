@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 import math
-import ssl
 from datetime import datetime, timedelta
 
+import requests
 from suds.client import Client
 
 from exp_db_populator.data_types import CREDS_GROUP, ExperimentTeamData, UserData
@@ -19,13 +19,11 @@ LOCAL_ROLE = "Contact"
 RELEVANT_DATE_RANGE = 100  # How many days of data to gather (either side of now)
 DATE_TIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
-BUS_APPS_SITE = "https://api.facilities.rl.ac.uk/ws/"
-BUS_APPS_AUTH = BUS_APPS_SITE + "UserOfficeWebService?wsdl"
-BUS_APPS_API = BUS_APPS_SITE + "ScheduleWebService?wsdl"
+BUS_APPS_SITE = "https://api.facilities.rl.ac.uk/"
+BUS_APPS_AUTH = BUS_APPS_SITE + "users-service/v1/sessions"
+BUS_APPS_API = BUS_APPS_SITE + "ws/ScheduleWebService?wsdl"
 
-# This is a workaround because the web service does not have a valid certificate
-if hasattr(ssl, "_create_unverified_context"):
-    ssl._create_default_https_context = ssl._create_unverified_context
+SUCCESSFUL_LOGIN_STATUS_CODE = 201
 
 
 def get_start_and_end(date, time_range_days):
@@ -60,7 +58,15 @@ def connect():
     try:
         username, password = get_credentials(CREDS_GROUP, "WebRead")
 
-        session_id = Client(BUS_APPS_AUTH).service.login(username, password)
+        response = requests.post(BUS_APPS_AUTH, json={"username": username, "password": password})
+
+        if response.status_code != SUCCESSFUL_LOGIN_STATUS_CODE:
+            raise IOError(
+                f"Failed to authenticate to busapps web service, "
+                f"code={response.status_code}, resp={response.text}"
+            )
+
+        session_id = response.json()["sessionId"]
         client = Client(BUS_APPS_API)
 
         return client, session_id
@@ -104,8 +110,9 @@ def reformat_data(instrument_data_list):
         instrument_data_list (list): List of an instrument's data from the website.
 
     Returns:
-        tuple (list, list): A list of the experiments and their associated data and a list of the experiment teams,
-                            and a dictionary of rb_numbers and their associated instrument..
+        tuple (list, list): A list of the experiments and their associated data and a
+            list of the experiment teams, and a dictionary of rb_numbers and their associated
+            instrument.
     """
     try:
         experiments = []

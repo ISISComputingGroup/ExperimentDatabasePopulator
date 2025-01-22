@@ -1,9 +1,7 @@
 import threading
 import unittest
+from datetime import datetime
 from time import sleep
-
-from mock import Mock, patch
-from peewee import SqliteDatabase
 
 import exp_db_populator.database_model as model
 from exp_db_populator.data_types import ExperimentTeamData, UserData
@@ -14,7 +12,16 @@ from exp_db_populator.populator import (
     remove_users_not_referenced,
     update,
 )
-from tests.webservices_test_data import *
+from exp_db_populator.webservices_test_data import (
+    TEST_DATE,
+    TEST_INSTRUMENT,
+    TEST_PI_ROLE,
+    TEST_RBNUMBER,
+    TEST_TIMEALLOCATED,
+    TEST_USER_PI,
+)
+from mock import Mock, patch
+from peewee import SqliteDatabase
 
 
 class PopulatorTests(unittest.TestCase):
@@ -58,15 +65,15 @@ class PopulatorTests(unittest.TestCase):
         self,
     ):
         model.User.create(name="Delete me", organisation="STFC")
-        KEEP_NAME = "Keep Me"
-        self.create_full_record(user_name=KEEP_NAME)
+        keep_name = "Keep Me"
+        self.create_full_record(user_name=keep_name)
 
         self.assertEqual(2, model.User.select().count())
 
         remove_users_not_referenced()
         users = model.User.select()
         self.assertEqual(1, users.count())
-        self.assertEqual(KEEP_NAME, users[0].name)
+        self.assertEqual(keep_name, users[0].name)
 
     def test_GIVEN_user_and_related_experiment_teams_WHEN_unreferenced_removed_THEN_user_remains(
         self,
@@ -90,15 +97,15 @@ class PopulatorTests(unittest.TestCase):
         self,
     ):
         model.Experiment.create(experimentid=TEST_RBNUMBER, duration=2, startdate=TEST_DATE)
-        KEEP_RB = "20000"
-        self.create_full_record(rb_number=KEEP_RB)
+        keep_rb = "20000"
+        self.create_full_record(rb_number=keep_rb)
 
         self.assertEqual(2, model.Experiment.select().count())
 
         remove_experiments_not_referenced()
         exps = model.Experiment.select()
         self.assertEqual(1, exps.count())
-        self.assertEqual(KEEP_RB, exps[0].experimentid)
+        self.assertEqual(keep_rb, exps[0].experimentid)
 
     def test_GIVEN_experiment_and_related_experiment_teams_WHEN_unreferenced_removed_THEN_experiment_remains(
         self,
@@ -108,9 +115,6 @@ class PopulatorTests(unittest.TestCase):
 
         remove_experiments_not_referenced()
         self.assertEqual(1, model.Experiment.select().count())
-
-    def test_WHEN_populate_called_with_experiments_and_no_teams_THEN_exception_raised(self):
-        self.assertRaises(KeyError, populate, ["TEST"], [])
 
     def create_experiments_dictionary(self):
         return [

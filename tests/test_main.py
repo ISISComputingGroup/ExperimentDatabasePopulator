@@ -1,16 +1,15 @@
 import unittest
 
-from mock import Mock, patch
-
+from exp_db_populator.cli import InstrumentPopulatorRunner
 from exp_db_populator.gatherer import Gatherer
-from main import InstrumentPopulatorRunner
+from mock import Mock, patch
 
 
 class MainTest(unittest.TestCase):
     def setUp(self):
         self.inst_pop_runner = InstrumentPopulatorRunner()
 
-    @patch("main.Gatherer")
+    @patch("exp_db_populator.cli.Gatherer")
     def test_GIVEN_no_gatherer_running_WHEN_instrument_list_has_new_instrument_THEN_gatherer_starts(
         self, gatherer
     ):
@@ -23,7 +22,7 @@ class MainTest(unittest.TestCase):
 
         self.assertEqual(new_gather, self.inst_pop_runner.gatherer)
 
-    @patch("main.InstrumentPopulatorRunner.remove_gatherer")
+    @patch("exp_db_populator.cli.InstrumentPopulatorRunner.remove_gatherer")
     def test_WHEN_instrument_list_updated_THEN_gatherer_stopped_and_cleared(self, stop):
         new_name, new_host = "TEST", "NDXTEST"
         self.inst_pop_runner.inst_list_changes(

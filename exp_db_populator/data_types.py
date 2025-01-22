@@ -19,7 +19,8 @@ class UserData:
     @property
     def user_id(self):
         """
-        Gets the user id for the user. Will create an entry for the user in the database if one doesn't exist.
+        Gets the user id for the user. Will create an entry for the user in
+        the database if one doesn't exist.
 
         Returns: the user's id.
         """
@@ -43,7 +44,8 @@ class ExperimentTeamData:
     @property
     def role_id(self):
         """
-        Gets the role id for the user based on the roles in the database. Will raise an exception if role is not found.
+        Gets the role id for the user based on the roles in the database.
+        Will raise an exception if role is not found.
 
         Returns: the role id.
 

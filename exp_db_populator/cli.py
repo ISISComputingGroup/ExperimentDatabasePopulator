@@ -3,6 +3,11 @@ import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
+from exp_db_populator.webservices_test_data import (
+    TEST_USER_1,
+    create_web_data_with_experimenters_and_other_date,
+)
+
 # Loging must be handled here as some imports might log errors
 log_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), "logs")
 if not os.path.exists(log_folder):
@@ -23,29 +28,24 @@ import threading
 import zlib
 
 import epics
-from six.moves import input
 
 from exp_db_populator.gatherer import Gatherer
 from exp_db_populator.populator import update
 from exp_db_populator.webservices_reader import reformat_data
-from tests.webservices_test_data import (
-    TEST_USER_1,
-    create_web_data_with_experimenters_and_other_date,
-)
 
 # PV that contains the instrument list
 INST_LIST_PV = "CS:INSTLIST"
 
 
-def convert_inst_list(value_from_PV):
+def convert_inst_list(value_from_pv):
     """
     Converts the instrument list coming from the PV into a dictionary.
     Args:
-        value_from_PV: The raw value from the PV.
+        value_from_pv: The raw value from the PV.
     Returns:
         dict: The instrument information.
     """
-    json_string = zlib.decompress(bytes.fromhex(value_from_PV)).decode("utf-8")
+    json_string = zlib.decompress(bytes.fromhex(value_from_pv)).decode("utf-8")
     return json.loads(json_string)
 
 
@@ -71,7 +71,8 @@ class InstrumentPopulatorRunner:
         Called when the instrument list PV changes value.
         Args:
             char_value: The string representation of the PV data.
-            **kw: The module will also send other info about the PV, we capture this and don't use it.
+            **kw: The module will also send other info about the PV, we capture this and don't
+                use it.
         """
         new_inst_list = convert_inst_list(char_value)
         if new_inst_list != self.prev_inst_list:
@@ -109,7 +110,7 @@ class InstrumentPopulatorRunner:
         self.gatherer.join()
 
 
-if __name__ == "__main__":
+def main_cli():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--cont",
@@ -142,6 +143,8 @@ if __name__ == "__main__":
         main.inst_list_changes(debug_inst_list)
     elif args.test_data:
         data = [create_web_data_with_experimenters_and_other_date([TEST_USER_1], datetime.now())]
+        if not args.db_user or not args.db_pass:
+            raise ValueError("Must specify a username and password if using test data")
         update(
             "localhost",
             "localhost",
@@ -169,3 +172,7 @@ if __name__ == "__main__":
                         logging.warning("Command not recognised: {}".format(menu_input))
         else:
             main.wait_for_gatherer_to_finish()
+
+
+if __name__ == "__main__":
+    main_cli()

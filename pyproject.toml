@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "ExperimentDatabasePopulator"
+dynamic = ["version"]
+description = "Experiment Database Populator"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+
+authors = [
+  {name = "ISIS Experiment Controls", email = "ISISExperimentControls@stfc.ac.uk" }
+]
+maintainers = [
+  {name = "ISIS Experiment Controls", email = "ISISExperimentControls@stfc.ac.uk" }
+]
+
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3 :: Only",
+]
+
+dependencies = [
+  "requests",
+  "suds",
+  "pykeepass",
+  "peewee",
+  "pymysql[rsa]",
+  "cryptography",
+  "pyepics",
+  "mock",  # Needed at runtime, not dev-only
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "ruff>=0.9",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/isiscomputinggroup/ExperimentDatabasePopulator"
+"Bug Reports" = "https://github.com/isiscomputinggroup/ExperimentDatabasePopulator/issues"
+"Source" = "https://github.com/isiscomputinggroup/ExperimentDatabasePopulator"
+
+[project.scripts]
+exp_db_populator = "exp_db_populator.cli:main_cli"
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = "--cov --cov-report=html -vv"
+
+[tool.coverage.run]
+branch = true
+source = ["exp_db_populator"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "if typing.TYPE_CHECKING:",
+  "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "coverage_html_report"
+
+[tool.setuptools_scm]
+
+[tool.setuptools.packages.find]
+include = ["exp_db_populator"]
+namespaces = false

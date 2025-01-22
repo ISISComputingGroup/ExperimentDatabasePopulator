@@ -1,4 +1,13 @@
-from peewee import *
+from peewee import (
+    AutoField,
+    CharField,
+    CompositeKey,
+    DateTimeField,
+    ForeignKeyField,
+    IntegerField,
+    Model,
+    Proxy,
+)
 
 # Model built using peewiz
 

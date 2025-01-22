@@ -1,9 +1,0 @@
-suds-jurko
-pykeepass
-peewee
-pymysql
-mock
-xmlrunner
-pyepics
-six
-cryptography
