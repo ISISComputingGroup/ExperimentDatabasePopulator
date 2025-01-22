@@ -70,7 +70,7 @@ Please follow the below instructions as part of deploying:
 * Make sure you are firstly a super user to epics using the following command: `sudo su - epics`
 * Pull most recent changes from master in `home/epics/RB_num_populator`
 * From `home/epics/RB_num_populator`, check that a python virtual environment exists called _"exp_db_populator_venv"_.
-* Activate virtual environment if present and check `/home/epics/RB_num_populator/requirements.txt` file matches dependencies in venv and then deactivate the virtual environment.
-* If there is no virtual environment called _"exp_db_populator_venv"_ or dependencies are not inline with `/home/epics/RB_num_populator/requirements.txt`, run `/home/epics/RB_num_populator/create_rb_number_populator_python_venv.sh` and check the virtual environment has been created.
+* Activate virtual environment if present and check `/home/epics/RB_num_populator/pyproject.toml` file matches dependencies in venv and then deactivate the virtual environment.
+* If there is no virtual environment called _"exp_db_populator_venv"_ or dependencies are not inline with `/home/epics/RB_num_populator/pyproject.toml`, run `/home/epics/RB_num_populator/create_rb_number_populator_python_venv.sh` and check the virtual environment has been created.
 * Check that the cron job is running correctly using the following command: `crontab -l`. The output should look similar to: ```20 * * * * sh /home/epics/RB_num_populator/rb_number_populator.sh > /tmp/rb_num_pop.out 2>&1```
 * Finally, check cron job is executing correctly by looking at recent logs since deploying under `/home/epics/RB_number_populator/logs` and for any errors indicating the cron job is not executing correctly under `/tmp/rb_num_pop.out`.
