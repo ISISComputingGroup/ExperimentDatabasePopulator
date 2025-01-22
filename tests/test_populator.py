@@ -116,9 +116,6 @@ class PopulatorTests(unittest.TestCase):
         remove_experiments_not_referenced()
         self.assertEqual(1, model.Experiment.select().count())
 
-    def test_WHEN_populate_called_with_experiments_and_no_teams_THEN_exception_raised(self):
-        self.assertRaises(KeyError, populate, ["TEST"], [])
-
     def create_experiments_dictionary(self):
         return [
             {
@@ -140,7 +137,7 @@ class PopulatorTests(unittest.TestCase):
         exp_team_data.user.user_id = 1
         return [exp_team_data]
 
-    def test_WHEN_populate_called_with_experiments_and_no_teams_2THEN_exception_raised(self):
+    def test_WHEN_populate_called_with_experiments_and_no_teams_THEN_exception_raised(self):
         experiments = self.create_experiments_dictionary()
         self.assertRaises(KeyError, populate, experiments, [])
 
