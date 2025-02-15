@@ -1,3 +1,5 @@
+from typing import Any, Literal, overload
+
 from peewee import (
     AutoField,
     CharField,
@@ -8,8 +10,6 @@ from peewee import (
     Model,
     Proxy,
 )
-
-# Model built using peewiz
 
 database_proxy = Proxy()
 
@@ -24,10 +24,21 @@ class Experiment(BaseModel):
     experimentid = CharField(column_name="experimentID")
     startdate = DateTimeField(column_name="startDate")
 
-    class Meta:
+    class Meta:  # pyright: ignore
         table_name = "experiment"
         indexes = ((("experimentid", "startdate"), True),)
         primary_key = CompositeKey("experimentid", "startdate")
+
+    @overload
+    def __getitem__(self, itm: Literal["duration"]) -> int | None:
+        pass
+
+    @overload
+    def __getitem__(self, itm: Literal["experimentid"]) -> str:
+        pass
+
+    def __getitem__(self, itm: str) -> Any:
+        return super().__getitem__(itm)  # pyright: ignore (pyright can't see __getitem__)
 
 
 class Role(BaseModel):
@@ -35,8 +46,19 @@ class Role(BaseModel):
     priority = IntegerField(null=True)
     roleid = AutoField(column_name="roleID")
 
-    class Meta:
+    class Meta:  # pyright: ignore
         table_name = "role"
+
+    @overload
+    def __getitem__(self, itm: Literal["name"] | Literal["role"]) -> str | None:
+        pass
+
+    @overload
+    def __getitem__(self, itm: Literal["priority"]) -> int | None:
+        pass
+
+    def __getitem__(self, itm: str) -> Any:
+        return super().__getitem__(itm)  # pyright: ignore (pyright can't see __getitem__)
 
 
 class User(BaseModel):
@@ -44,8 +66,19 @@ class User(BaseModel):
     organisation = CharField(null=True)
     userid = AutoField(column_name="userID")
 
-    class Meta:
+    class Meta:  # pyright: ignore
         table_name = "user"
+
+    @overload
+    def __getitem__(self, itm: Literal["name"] | Literal["organisation"]) -> str:
+        pass
+
+    @overload
+    def __getitem__(self, itm: Literal["userid"]) -> int:
+        pass
+
+    def __getitem__(self, itm: str) -> Any:
+        return super().__getitem__(itm)  # pyright: ignore (pyright can't see __getitem__)
 
 
 class Experimentteams(BaseModel):
@@ -61,7 +94,7 @@ class Experimentteams(BaseModel):
     )
     userid = ForeignKeyField(column_name="userID", field="userid", model=User)
 
-    class Meta:
+    class Meta:  # pyright: ignore
         table_name = "experimentteams"
         indexes = (
             (("experimentid", "startdate"), False),
