@@ -44,12 +44,10 @@ class WebServicesReaderTests(unittest.TestCase):
         self.assertTrue(start < end)
 
     def test_GIVEN_experimenters_WHEN_get_experimenters_THEN_get_experimenters(self):
-        team = MagicMock()
-        team.experimenters = ["TEST"]
-        self.assertEqual(["TEST"], get_experimenters(team))
+        self.assertEqual(["TEST"], get_experimenters({"experimenters": ["TEST"]}))
 
     def test_GIVEN_no_experimenters_WHEN_get_experimenters_THEN_empty_list(self):
-        team = MagicMock(spec=["NOT_EXPERIMENTEERS"])
+        team = {}
         self.assertEqual([], get_experimenters(team))
 
     def test_GIVEN_no_data_set_WHEN_data_formatted_THEN_no_data_set(self):
