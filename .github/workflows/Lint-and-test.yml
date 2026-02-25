@@ -6,6 +6,7 @@ jobs:
     with:
       compare-branch: origin/master
       python-ver: '3.11'
+      clone-submodule: false
   tests:
     runs-on: ${{ matrix.os }}
     strategy:
