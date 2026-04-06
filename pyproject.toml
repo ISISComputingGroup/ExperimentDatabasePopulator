@@ -38,6 +38,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "pyright",
   "pytest",
   "pytest-cov",
   "ruff>=0.9",
@@ -75,3 +76,7 @@ directory = "coverage_html_report"
 [tool.setuptools.packages.find]
 include = ["exp_db_populator"]
 namespaces = false
+
+[tool.pyright]
+include = ["exp_db_populator"]
+exclude = ["exp_db_populator/passwords/password_reader.py"]
