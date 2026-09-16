@@ -3,13 +3,13 @@
 
 The experiment database populator is a Python program that is designed to run centrally and periodically update instrument databases.
 
-The Experiment Database Populator runs on [Control SVCS](https://github.com/ISISComputingGroup/ibex_developers_manual/wiki/control-svcs) using credentials found in the usual place.
+The Experiment Database Populator runs on [Control SVCS](https://github.com/ISISComputingGroup/ibex_developers_manual/wiki/control-svcs) login using credentials found in the usual place.
 
 The repository on control-svcs is located under: `/home/epics/RB_num_populator`
 
-The populator is executed hourly by a cron job.
+The populator is executed hourly by a cron job running as user`epics` (i.e. not user `isissupport`)
 
-Logs are outputed hourly to `/home/epics/RB_number_populator/logs`.
+Logs are outputed hourly to `/home/epics/RB_number_populator/exp_db_populator/logs`.
 
 Output from the cron job, which will show if the program is not working are written to `/tmp/rb_num_pop.out`.
 
@@ -73,4 +73,4 @@ Please follow the below instructions as part of deploying:
 * Activate virtual environment if present and check `/home/epics/RB_num_populator/pyproject.toml` file matches dependencies in venv and then deactivate the virtual environment.
 * If there is no virtual environment called _"exp_db_populator_venv"_ or dependencies are not inline with `/home/epics/RB_num_populator/pyproject.toml`, run `/home/epics/RB_num_populator/create_rb_number_populator_python_venv.sh` and check the virtual environment has been created.
 * Check that the cron job is running correctly using the following command: `crontab -l`. The output should look similar to: ```20 * * * * sh /home/epics/RB_num_populator/rb_number_populator.sh > /tmp/rb_num_pop.out 2>&1```
-* Finally, check cron job is executing correctly by looking at recent logs since deploying under `/home/epics/RB_number_populator/logs` and for any errors indicating the cron job is not executing correctly under `/tmp/rb_num_pop.out`.
+* Finally, check cron job is executing correctly by looking at recent logs since deploying under `/home/epics/RB_number_populator/exp_db_populator/logs` and for any errors indicating the cron job is not executing correctly under `/tmp/rb_num_pop.out`.
