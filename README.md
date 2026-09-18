@@ -3,7 +3,7 @@
 
 The experiment database populator is a Python program that is designed to run centrally and periodically update instrument databases.
 
-The Experiment Database Populator runs on [Control SVCS](https://github.com/ISISComputingGroup/ibex_developers_manual/wiki/control-svcs) login using credentials found in the usual place.
+The Experiment Database Populator runs on [Control SVCS](https://shadow.nd.rl.ac.uk/ibex_sysadmin_manual/systems/linux_support_systems/control-svcs.html) login using credentials found in the usual place.
 
 The repository on control-svcs is located under: `/home/epics/RB_num_populator`
 
