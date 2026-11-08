@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ "ubuntu-latest" ]
+        os: [ "ubuntu-24.04" ]
         # Wide matrix of versions as this may run on a RHEL node with old python versions,
         # but we also want it to work on dev machines
         version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
